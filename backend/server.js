@@ -105,11 +105,22 @@ app.use('/uploads', (req, res) => {
 });
 
 app.use("/api/student", studentRoutes);
+app.use("/student", studentRoutes);
+
 app.use("/api/auth", authRoutes);
+app.use("/auth", authRoutes);
+
 app.use("/api/jobs", jobRoutes);
+app.use("/jobs", jobRoutes);
+
 app.use("/api/company", companyRoutes);
+app.use("/company", companyRoutes);
+
 app.use("/api/admin", adminRoutes);
+app.use("/admin", adminRoutes);
+
 app.use("/api/placements", placementRoutes);
+app.use("/placements", placementRoutes);
 
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
