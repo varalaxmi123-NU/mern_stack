@@ -2,7 +2,7 @@ import axios from "axios";
 
 const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? "http://localhost:5000/api" : "/api");
-export const SERVER_URL = isLocal ? "http://localhost:5000" : "";
+export const SERVER_URL = import.meta.env.VITE_SERVER_URL || (isLocal ? "http://localhost:5000" : "");
 
 // Turns a resume/file value into a URL that always points at the backend.
 export const resolveFileUrl = (link) => {
