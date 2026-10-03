@@ -9,8 +9,12 @@ function Landing() {
   const [jobCount, setJobCount] = useState(0);
 
   useEffect(() => {
-    API.get("/placements").then((res) => setFeed(res.data)).catch(() => setFeed([]));
-    API.get("/jobs").then((res) => setJobCount(res.data.length)).catch(() => setJobCount(0));
+    API.get("/placements")
+      .then((res) => setFeed(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setFeed([]));
+    API.get("/jobs")
+      .then((res) => setJobCount(Array.isArray(res.data) ? res.data.length : 0))
+      .catch(() => setJobCount(0));
   }, []);
 
   // SVG Icons
@@ -185,7 +189,7 @@ function Landing() {
         </div>
         
         <div className="placements-grid">
-          {(feed.length > 0 ? feed : [
+          {(Array.isArray(feed) && feed.length > 0 ? feed : [
             { _id: 'f1', studentName: 'Rahul Sharma', jobTitle: 'Software Engineer', companyName: 'Microsoft', package: '₹45 LPA' },
             { _id: 'f2', studentName: 'Priya Patel', jobTitle: 'Data Analyst', companyName: 'Amazon', package: '₹28 LPA' },
             { _id: 'f3', studentName: 'Ankit Kumar', jobTitle: 'SDE-1', companyName: 'Google', package: '₹52 LPA' },
