@@ -43,13 +43,16 @@ const ensureSeedData = async () => {
 };
 
 const app = express();
-connectDB().then(ensureSeedData);
+connectDB().then(ensureSeedData).catch((err) => console.error("Init DB error:", err));
 
-// Make sure the uploads folder (and resumes subfolder) always exists so
-// static serving below never 404s just because the directory is missing.
+// Make sure the uploads folder exists (safely handle read-only serverless filesystems)
 const uploadsDir = path.join(__dirname, "uploads");
-fs.mkdirSync(path.join(uploadsDir, "resumes"), { recursive: true });
-fs.mkdirSync(path.join(uploadsDir, "logos"), { recursive: true });
+try {
+  fs.mkdirSync(path.join(uploadsDir, "resumes"), { recursive: true });
+  fs.mkdirSync(path.join(uploadsDir, "logos"), { recursive: true });
+} catch (e) {
+  // Read-only filesystem on serverless environments
+}
 console.log(`📁 Serving uploaded files from: ${uploadsDir}`);
 console.log(`   (if a resume 404s, check the exact file exists inside ${path.join(uploadsDir, "resumes")})`);
 
