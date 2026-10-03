@@ -1,9 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-// The backend host without the "/api" suffix - needed to build links to
-// uploaded files (resumes, logos, etc.) served from /uploads on the backend.
-export const SERVER_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+const isLocal = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+const API_BASE_URL = import.meta.env.VITE_API_URL || (isLocal ? "http://localhost:5000/api" : "/api");
+export const SERVER_URL = isLocal ? "http://localhost:5000" : "";
 
 // Turns a resume/file value into a URL that always points at the backend.
 export const resolveFileUrl = (link) => {
