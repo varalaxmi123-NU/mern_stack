@@ -197,6 +197,7 @@ function Landing() {
             { _id: 'f5', studentName: 'Vikram Singh', jobTitle: 'Backend Engineer', companyName: 'Stripe', package: '₹40 LPA' },
             { _id: 'f6', studentName: 'Neha Gupta', jobTitle: 'Product Manager', companyName: 'Atlassian', package: '₹35 LPA' },
           ]).slice(0, 6).map((item, idx) => {
+            if (!item) return null;
             const formatTitleCase = (str) => {
               if (!str) return "";
               return String(str)
