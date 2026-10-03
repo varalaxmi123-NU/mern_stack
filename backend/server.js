@@ -55,6 +55,13 @@ console.log(`   (if a resume 404s, check the exact file exists inside ${path.joi
 
 app.use(cors());
 app.use(express.json());
+
+// Ensure DB is connected on every serverless execution
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 app.use('/uploads', express.static(uploadsDir));
 
 // If a request for an uploaded file falls through (i.e. the file wasn't
