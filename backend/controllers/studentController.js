@@ -7,6 +7,21 @@ const Application = require("../models/Application");
 exports.getProfile = async (req, res) => {
   try {
     const student = await Student.findById(req.user.id).select("-password");
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    // Validate that the uploaded resume actually exists on the server disk
+    if (student.resumeLink && student.resumeLink.startsWith("/uploads/resumes/")) {
+      const fs = require("fs");
+      const path = require("path");
+      const filename = path.basename(student.resumeLink);
+      const filePath = path.join(__dirname, "..", "uploads", "resumes", filename);
+      if (!fs.existsSync(filePath)) {
+        // File is missing on disk. Clear the stale link so UI doesn't point to a 404
+        student.resumeLink = "";
+        await Student.findByIdAndUpdate(req.user.id, { resumeLink: "" });
+      }
+    }
+
     res.json(student);
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -41,6 +56,12 @@ exports.uploadResume = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
+    }
+    const path = require("path");
+    if (path.extname(req.file.originalname).toLowerCase() !== ".pdf") {
+      const fs = require("fs");
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ message: "Only PDF files (.pdf) are allowed" });
     }
     const resumeUrl = `/uploads/resumes/${req.file.filename}`;
 

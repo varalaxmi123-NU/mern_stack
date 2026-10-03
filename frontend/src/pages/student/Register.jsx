@@ -152,9 +152,26 @@ function Register() {
             </button>
           </form>
 
-          <p className="register-link" style={{ textAlign: "center", marginTop: "24px" }}>
-            Already have an account? <Link to="/login">Sign in here →</Link>
-          </p>
+          <div style={{ textAlign: "center", marginTop: "20px" }}>
+            <p className="register-link" style={{ marginTop: "16px", marginBottom: "6px" }}>
+              Already have an account? <Link to="/login">Sign in here</Link>
+            </p>
+            <p className="register-link" style={{ marginTop: "6px", marginBottom: "0" }}>
+              <Link
+                to="/"
+                className="back-to-home-text-link"
+                style={{
+                  color: "#6366f1",
+                  fontWeight: "700",
+                  fontSize: "0.88rem",
+                  textDecoration: "none",
+                  display: "inline-block"
+                }}
+              >
+                Back to Home
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

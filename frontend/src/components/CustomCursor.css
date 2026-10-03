@@ -1,11 +1,3 @@
-@media (pointer: fine) {
-  body,
-  a,
-  button {
-    cursor: none;
-  }
-}
-
 .cursor-dot,
 .cursor-ring {
   position: fixed;

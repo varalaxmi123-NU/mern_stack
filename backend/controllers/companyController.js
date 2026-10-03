@@ -3,6 +3,8 @@ const Company = require("../models/Company");
 const Student = require("../models/Student");
 const PlacementUpdate = require("../models/PlacementUpdate");
 const Application = require("../models/Application");
+const Employee = require("../models/Employee");
+const bcrypt = require("bcryptjs");
 const { computeSkillMatch } = require("../utils/atsMatch");
 
 // GET /api/company/profile  (logged-in company views its own profile)
@@ -26,6 +28,38 @@ exports.updateMyProfile = async (req, res) => {
       { new: true }
     ).select("-password");
     res.status(200).json({ message: "Profile updated", company });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// POST /api/company/upload-logo  (company uploads logo PNG / image)
+exports.uploadCompanyLogo = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No logo file uploaded" });
+    }
+    const logoUrl = `/uploads/logos/${req.file.filename}`;
+    const company = await Company.findByIdAndUpdate(
+      req.user.id,
+      { logoUrl },
+      { new: true }
+    ).select("-password");
+    res.status(200).json({ message: "Logo uploaded successfully", logoUrl, company });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// DELETE /api/company/logo (company removes its logo)
+exports.deleteCompanyLogo = async (req, res) => {
+  try {
+    const company = await Company.findByIdAndUpdate(
+      req.user.id,
+      { logoUrl: "" },
+      { new: true }
+    ).select("-password");
+    res.status(200).json({ message: "Logo removed", company });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -288,3 +322,79 @@ exports.scheduleInterview = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+// GET /api/company/employees
+exports.getCompanyEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find({ companyId: req.user.id })
+      .select("-password")
+      .sort({ createdAt: -1 });
+    res.status(200).json(employees);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// POST /api/company/employees
+exports.addCompanyEmployee = async (req, res) => {
+  try {
+    const { name, email, password, designation } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Employee name, email, and password are required" });
+    }
+
+    const emailLower = email.toLowerCase().trim();
+    const existingEmployee = await Employee.findOne({ email: emailLower });
+    const existingCompany = await Company.findOne({ email: emailLower });
+    const existingStudent = await Student.findOne({ email: emailLower });
+    if (existingEmployee || existingCompany || existingStudent) {
+      return res.status(400).json({ message: "An account with this email already exists" });
+    }
+
+    const company = await Company.findById(req.user.id);
+    if (!company) {
+      return res.status(404).json({ message: "Company not found" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const employee = await Employee.create({
+      name: name.trim(),
+      email: emailLower,
+      password: hashedPassword,
+      designation: designation ? designation.trim() : "HR",
+      companyId: company._id,
+      companyName: company.name,
+    });
+
+    res.status(201).json({
+      message: "Employee added successfully",
+      employee: {
+        _id: employee._id,
+        name: employee.name,
+        email: employee.email,
+        designation: employee.designation,
+        status: employee.status,
+        createdAt: employee.createdAt,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// DELETE /api/company/employees/:id
+exports.deleteCompanyEmployee = async (req, res) => {
+  try {
+    const employee = await Employee.findOneAndDelete({
+      _id: req.params.id,
+      companyId: req.user.id,
+    });
+    if (!employee) {
+      return res.status(404).json({ message: "Employee not found or unauthorized" });
+    }
+    res.status(200).json({ message: "Employee removed successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+

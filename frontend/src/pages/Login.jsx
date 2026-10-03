@@ -6,7 +6,6 @@ import "./Login.css";
 function Login() {
   const [email, setEmail]       = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole]         = useState("student");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
   const navigate = useNavigate();
@@ -17,7 +16,7 @@ function Login() {
     if (!email || !password) { setError("Please fill in all fields."); return; }
     try {
       setLoading(true);
-      const res = await API.post("/auth/login", { email, password, role });
+      const res = await API.post("/auth/login", { email, password });
       const { token, role: actualRole, user } = res.data;
       localStorage.setItem("token", token);
       localStorage.setItem("role", actualRole);
@@ -57,11 +56,11 @@ function Login() {
         <div className="login-brand">
           <span className="login-brand-logo">CampusHire</span>
           <h1>Your campus career<br />starts here.</h1>
-          <p>The complete placement management platform for your university — connecting students and companies in real time.</p>
+          <p>The complete placement management platform for your university — connecting students, placement department, and recruiters in real time.</p>
         </div>
 
         <div className="login-features">
-          <div className="login-feature-item">Role-Based Secure Login</div>
+          <div className="login-feature-item">Secure University Access</div>
           <div className="login-feature-item">Live Job Listings</div>
           <div className="login-feature-item">Real-Time Placement Feed</div>
         </div>
@@ -73,19 +72,6 @@ function Login() {
           <div className="login-header">
             <h2>Welcome Back</h2>
             <p>Sign in to your account</p>
-          </div>
-
-          <div className="role-selector">
-            {["student", "company", "admin"].map((r) => (
-              <button
-                key={r}
-                type="button"
-                className={`role-btn ${role === r ? "active" : ""}`}
-                onClick={() => setRole(r)}
-              >
-                {r.charAt(0).toUpperCase() + r.slice(1)}
-              </button>
-            ))}
           </div>
 
           <form onSubmit={handleSubmit} className="login-form">
@@ -108,7 +94,7 @@ function Login() {
             <div className="form-group">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <label htmlFor="password" style={{ marginBottom: 0 }}>Password</label>
-                <Link to={`/forgot-password/${role}`} className="forgot-password-link" style={{ fontSize: "0.85rem", textDecoration: "none" }}>
+                <Link to="/forgot-password" className="forgot-password-link" style={{ fontSize: "0.85rem", textDecoration: "none" }}>
                   Forgot Password?
                 </Link>
               </div>
@@ -125,26 +111,31 @@ function Login() {
               </div>
             </div>
 
-            <button type="submit" className="btn-login" disabled={loading} style={{ marginTop: "12px" }}>
-              {loading ? "Signing in..." : `Sign in as ${role}`}
+            <button type="submit" className="btn-login" disabled={loading} style={{ marginTop: "14px" }}>
+              <span>{loading ? "Signing in..." : "Sign In"}</span>
             </button>
           </form>
 
           <div className="register-link-container" style={{ textAlign: "center", marginTop: "20px" }}>
-            {role === "student" && (
-              <p className="register-link">
-                Don't have an account? <Link to="/student/register">Create one here →</Link>
-              </p>
-            )}
-            {role === "admin" && (
-              <p className="register-link">
-                First time here? <Link to="/admin/register">Register your institution →</Link>
-              </p>
-            )}
+            <p className="register-link" style={{ marginTop: "16px", marginBottom: "6px" }}>
+              New student? <Link to="/student/register">Create account</Link>
+            </p>
+            <p className="register-link" style={{ marginTop: "6px", marginBottom: "0" }}>
+              <Link
+                to="/"
+                className="back-to-home-text-link"
+                style={{
+                  color: "#6366f1",
+                  fontWeight: "700",
+                  fontSize: "0.88rem",
+                  textDecoration: "none",
+                  display: "inline-block"
+                }}
+              >
+                Back to Home
+              </Link>
+            </p>
           </div>
-          <p className="back-home">
-            <Link to="/">← Back to Home</Link>
-          </p>
         </div>
       </div>
     </div>

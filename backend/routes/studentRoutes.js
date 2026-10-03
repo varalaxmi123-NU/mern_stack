@@ -22,7 +22,28 @@ const storage = multer.diskStorage({
     cb(null, req.user.id + "-" + Date.now() + path.extname(file.originalname));
   },
 });
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    const isPdfMime = file.mimetype === "application/pdf";
+    const isPdfExt = path.extname(file.originalname).toLowerCase() === ".pdf";
+    if (isPdfMime || isPdfExt) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF files (.pdf) are allowed!"), false);
+    }
+  },
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
+
+const uploadMiddleware = (req, res, next) => {
+  upload.single("resume")(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message || "Invalid file format. Only PDF files are allowed." });
+    }
+    next();
+  });
+};
 
 router.post("/register", register);
 router.post("/login", login);
@@ -32,7 +53,7 @@ router.use(protect, authorize("student"));
 
 router.get("/profile", getProfile);
 router.put("/profile", updateProfile);
-router.post("/upload-resume", upload.single("resume"), uploadResume);
+router.post("/upload-resume", uploadMiddleware, uploadResume);
 router.get("/companies", getCompanies);
 router.post("/jobs/:jobId/apply", applyForJob);
 router.get("/applications", getApplications);

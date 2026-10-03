@@ -1,68 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../api/axios";
+import API, { resolveFileUrl } from "../api/axios";
 import "./Landing.css";
-
-function CustomCursor() {
-  const dotRef = useRef(null);
-  const ringRef = useRef(null);
-
-  useEffect(() => {
-    if (!window.matchMedia("(pointer: fine)").matches) return;
-
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-    let ringX = mouseX;
-    let ringY = mouseY;
-    let rafId;
-
-    const handleMove = (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
-      }
-    };
-
-    const animate = () => {
-      ringX += (mouseX - ringX) * 0.16;
-      ringY += (mouseY - ringY) * 0.16;
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate(${ringX}px, ${ringY}px)`;
-      }
-      rafId = requestAnimationFrame(animate);
-    };
-
-    const handleDown = () => ringRef.current?.classList.add("cursor-active");
-    const handleUp = () => ringRef.current?.classList.remove("cursor-active");
-
-    const handleOver = (e) => {
-      const interactive = e.target.closest("a, button, .success-card, .bento-card, .stat-item");
-      ringRef.current?.classList.toggle("cursor-hover", !!interactive);
-    };
-
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("mousemove", handleOver);
-    window.addEventListener("mousedown", handleDown);
-    window.addEventListener("mouseup", handleUp);
-    rafId = requestAnimationFrame(animate);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("mousemove", handleOver);
-      window.removeEventListener("mousedown", handleDown);
-      window.removeEventListener("mouseup", handleUp);
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  return (
-    <>
-      <div className="cursor-dot" ref={dotRef}></div>
-      <div className="cursor-ring" ref={ringRef}></div>
-    </>
-  );
-}
 
 function Landing() {
   const navigate = useNavigate();
@@ -107,7 +46,6 @@ function Landing() {
 
   return (
     <div className="landing-container">
-      <CustomCursor />
       {/* ===== NAVBAR ===== */}
       <nav className="navbar">
         <a href="#" className="nav-brand">
@@ -132,7 +70,9 @@ function Landing() {
         
         <div className="hero-grid">
           <div className="hero-content animate-fade-up">
-            <div className="pill-badge">Next-Gen Placement Platform</div>
+            <div className="pill-badge">
+              <span className="pill-dot"></span>Next-Gen Placement Platform
+            </div>
             <h1 className="hero-title">
               Accelerate your campus hiring with <span className="text-gradient">CampusHire.</span>
             </h1>
@@ -142,7 +82,7 @@ function Landing() {
             </p>
             <div className="hero-actions">
               <button className="btn-primary" onClick={() => navigate("/login")}>
-                Start Hiring <span style={{ marginLeft: "4px" }}>→</span>
+                Start Hiring
               </button>
               <a href="#features" className="btn-secondary">
                 Explore Platform
@@ -199,7 +139,9 @@ function Landing() {
       {/* ===== FEATURES ===== */}
       <section className="features-section" id="features">
         <div className="section-header">
-          <div className="pill-badge" style={{ marginBottom: "16px" }}>Platform Features</div>
+          <div className="pill-badge" style={{ marginBottom: "16px" }}>
+            <span className="pill-dot"></span>Platform Features
+          </div>
           <h2 className="section-title">Everything you need,<br />beautifully integrated.</h2>
           <p className="section-subtitle">
             Say goodbye to fragmented spreadsheets and endless email chains. 
@@ -209,25 +151,25 @@ function Landing() {
         
         <div className="bento-grid">
           <div className="bento-card">
-            <span className="bento-index">01</span>
+            <span className="bento-step">01</span>
             <div className="bento-icon"><BriefcaseSVG /></div>
             <h3>Intelligent Job Board</h3>
             <p>Companies can instantly publish roles and track applicant pipelines. Students receive real-time alerts the second a new opportunity opens.</p>
           </div>
           <div className="bento-card">
-            <span className="bento-index">02</span>
+            <span className="bento-step">02</span>
             <div className="bento-icon"><UsersSVG /></div>
             <h3>Unified Access</h3>
             <p>A single entry point. The system automatically routes Students, Recruiters, and Admins to their specialized, role-based dashboards.</p>
           </div>
           <div className="bento-card">
-            <span className="bento-index">03</span>
+            <span className="bento-step">03</span>
             <div className="bento-icon"><ActivitySVG /></div>
             <h3>Live Activity Feed</h3>
             <p>Celebrate success campus-wide. When a student is hired, the real-time placement feed instantly updates with the company and package details.</p>
           </div>
           <div className="bento-card">
-            <span className="bento-index">04</span>
+            <span className="bento-step">04</span>
             <div className="bento-icon"><SettingsSVG /></div>
             <h3>Admin Control Center</h3>
             <p>Placement coordinators gain absolute oversight. Monitor company registrations, approve job postings, and track campus-wide placement metrics.</p>
@@ -250,26 +192,74 @@ function Landing() {
             { _id: 'f4', studentName: 'Sneha Reddy', jobTitle: 'Frontend Engineer', companyName: 'Vercel', package: '₹32 LPA' },
             { _id: 'f5', studentName: 'Vikram Singh', jobTitle: 'Backend Engineer', companyName: 'Stripe', package: '₹40 LPA' },
             { _id: 'f6', studentName: 'Neha Gupta', jobTitle: 'Product Manager', companyName: 'Atlassian', package: '₹35 LPA' },
-          ]).slice(0, 6).map((item) => (
-            <div className="success-card" key={item._id}>
-              <div className="success-card-top">
-                <div className="student-avatar">
-                  {item.studentName ? item.studentName.charAt(0).toUpperCase() : "S"}
+          ]).slice(0, 6).map((item, idx) => {
+            const formatTitleCase = (str) => {
+              if (!str) return "";
+              return String(str)
+                .split(" ")
+                .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : ""))
+                .join(" ");
+            };
+
+            const formatPackage = (pkg) => {
+              if (!pkg) return "";
+              let clean = String(pkg).replace(/₹/g, "").trim();
+              if (!clean.toUpperCase().includes("LPA") && !isNaN(clean)) {
+                clean += " LPA";
+              }
+              return `₹${clean}`;
+            };
+
+            const AVATAR_GRADIENTS = [
+              "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+              "linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%)",
+              "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
+              "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+              "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+              "linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%)",
+            ];
+            const charCode = (item.studentName || "S").charCodeAt(0) || 0;
+            const avatarBg = AVATAR_GRADIENTS[(charCode + idx) % AVATAR_GRADIENTS.length];
+
+            return (
+              <div className="success-card" key={item._id || idx}>
+                <div className="success-card-top">
+                  <div className="student-profile-row">
+                    <div className="student-avatar" style={{ background: avatarBg }}>
+                      {item.studentName ? item.studentName.charAt(0).toUpperCase() : "S"}
+                    </div>
+                    <div className="student-name-box">
+                      <h4 className="student-name">{formatTitleCase(item.studentName || "Student")}</h4>
+                      <span className="student-company-tag">
+                        {(item.companyLogo || item.logoUrl || item.company?.logoUrl) ? (
+                          <img
+                            src={resolveFileUrl(item.companyLogo || item.logoUrl || item.company?.logoUrl)}
+                            alt=""
+                            style={{ width: "16px", height: "16px", objectFit: "contain", borderRadius: "3px", flexShrink: 0 }}
+                            onError={(e) => { e.target.style.display = "none"; }}
+                          />
+                        ) : null}
+                        {item.companyName || "Company"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <span className="verified-badge">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                  Hired
-                </span>
+
+                <div className="success-details">
+                  <div className="role-chip">
+                    <span className="role-chip-label">Designation</span>
+                    <span className="role-chip-val">{formatTitleCase(item.jobTitle || "Engineer")}</span>
+                  </div>
+                  {item.package && (
+                    <div className="pkg-chip">
+                      <span className="pkg-chip-label">Package</span>
+                      <span className="pkg-chip-val">{formatPackage(item.package)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="success-details">
-                <h4>{item.studentName}</h4>
-                <p>Hired as <strong>{item.jobTitle || "Engineer"}</strong> at <strong>{item.companyName}</strong></p>
-                {item.package && <span className="pkg-badge">{item.package}</span>}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -304,7 +294,7 @@ function Landing() {
         
         <div className="stats-cta">
           <button className="btn-primary" onClick={() => navigate("/login")}>
-            Join the Network <span style={{ marginLeft: "4px" }}>→</span>
+            Join the Network
           </button>
         </div>
       </section>

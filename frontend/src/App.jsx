@@ -2,7 +2,6 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ConfirmProvider } from "./components/ConfirmDialog";
-import CustomCursor from "./components/CustomCursor";
 
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -20,7 +19,6 @@ function App() {
   return (
     <ErrorBoundary>
     <ConfirmProvider>
-    <CustomCursor />
     <Router>
       <Routes>
         <Route path="/" element={<Landing />} />
@@ -29,6 +27,7 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         {/* Universal Auth routes */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/forgot-password/:role" element={<ForgotPassword />} />
 
         {/* Student-only pages */}

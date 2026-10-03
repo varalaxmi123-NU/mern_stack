@@ -155,9 +155,14 @@ function ForgotPassword() {
             </form>
           )}
 
-          <p className="back-home" style={{ marginTop: "24px" }}>
-            <Link to="/login">← Back to Login</Link>
-          </p>
+          <div style={{ textAlign: "center", marginTop: "24px", display: "flex", flexDirection: "column", gap: "10px", alignItems: "center" }}>
+            <Link to="/login" className="back-to-home-text-link">
+              Back to Login
+            </Link>
+            <Link to="/" className="back-to-home-text-link">
+              Back to Home
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../../api/axios";
+import API, { resolveFileUrl } from "../../api/axios";
 import UserMenu from "../../components/UserMenu";
 import Toast from "../../components/Toast";
 import { useConfirm } from "../../components/ConfirmDialog";
@@ -21,6 +21,10 @@ function AdminDashboard() {
   const confirm = useConfirm();
 
   const isSuperAdmin = user?.subRole !== "placement_officer"; // covers old accounts with no subRole too
+
+  const [studentSortBy, setStudentSortBy] = useState("cgpa_desc"); // "cgpa_desc", "skills_desc", "cgpa_asc", "name_asc", "recent"
+  const [studentSkillSearch, setStudentSkillSearch] = useState("");
+  const [studentStatusFilter, setStudentStatusFilter] = useState("all"); // "all", "notplaced", "placed"
 
   const [companyForm, setCompanyForm] = useState({
     name: "", email: "", password: "", headquarters: "", description: "", eligibility: "", recruitmentProcess: "", skillsTested: "",
@@ -159,20 +163,86 @@ function AdminDashboard() {
   };
 
   const navItems = [
-    { key: "analytics",  icon: "📊", label: "Analytics" },
-    { key: "companies",  icon: "Co", label: "Companies" },
-    { key: "addCompany", icon: "+",  label: "Add Company" },
-    { key: "students",   icon: "St", label: "Students" },
-    { key: "markHired",  icon: "H",  label: "Mark Hired" },
-    { key: "records",    icon: "Re", label: "Records" },
-    ...(isSuperAdmin ? [{ key: "officers", icon: "Of", label: "Placement Officers" }] : []),
+    {
+      key: "analytics",
+      label: "Analytics",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
+      ),
+    },
+    {
+      key: "companies",
+      label: "Companies",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+          <path d="M9 22v-4h6v4" />
+          <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
+        </svg>
+      ),
+    },
+    {
+      key: "addCompany",
+      label: "Add Company",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="16" />
+          <line x1="8" y1="12" x2="16" y2="12" />
+        </svg>
+      ),
+    },
+    {
+      key: "students",
+      label: "Students",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+          <path d="M6 12v5c3 3 9 3 12 0v-5" />
+        </svg>
+      ),
+    },
+    {
+      key: "markHired",
+      label: "Record Placement",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" />
+        </svg>
+      ),
+    },
+    {
+      key: "records",
+      label: "Placement Records",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>
+      ),
+    },
+    ...(isSuperAdmin ? [{
+      key: "officers",
+      label: "Placement Officers",
+      icon: (
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+      ),
+    }] : []),
   ];
 
   const pageTitle = {
+    analytics:  "Placement Analytics",
     companies:  "All Companies",
     addCompany: "Add New Company",
     students:   "All Students",
-    markHired:  "Mark Student Hired",
+    markHired:  "Record Placement",
     records:    "Placement Records",
     officers:   "Placement Officers",
   };
@@ -188,12 +258,13 @@ function AdminDashboard() {
         </div>
 
         <nav className="sidebar-nav">
-          {navItems.map(({ key, label }) => (
+          {navItems.map(({ key, label, icon }) => (
             <button
               key={key}
               className={`nav-item ${tab === key ? "active" : ""}`}
               onClick={() => handleTabClick(key)}
             >
+              <span className="nav-item-icon">{icon}</span>
               <span className="nav-item-text">{label}</span>
             </button>
           ))}
@@ -206,6 +277,10 @@ function AdminDashboard() {
               <span className="user-name">{user?.name || "Admin"}</span>
               <span className="user-role">{isSuperAdmin ? "Super Admin" : "Placement Officer"}</span>
             </div>
+          </div>
+          <div className="sidebar-system-badge">
+            <span>Portal Status</span>
+            <span className="sidebar-system-status"><span className="sidebar-system-dot"></span> Live</span>
           </div>
           <button className="btn-logout-sidebar" onClick={handleLogout}>
             Sign Out
@@ -234,78 +309,172 @@ function AdminDashboard() {
 
         <div className="content-body">
           {tab === "analytics" && (
-            <div className="dash-section">
-              <div className="dash-section-header">
-                <h3>Placement Analytics Dashboard</h3>
+            <div className="dash-section" style={{ background: "transparent", border: "none", boxShadow: "none", padding: 0 }}>
+              <div style={{ marginBottom: 28 }}>
+                <h3 style={{ fontSize: "1.45rem", fontWeight: 800, color: "#0f172a", marginBottom: 6 }}>Placement Analytics & Performance</h3>
+                <p style={{ color: "#64748b", fontSize: "0.92rem", margin: 0 }}>Real-time university placement metrics, department distributions, and student academic performance.</p>
               </div>
               
               {analytics ? (
                 <>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "20px", marginBottom: "30px" }}>
-                    <div style={{ padding: "20px", background: "var(--color-bg-hover)", borderRadius: "8px", border: "1px solid var(--color-border)", textAlign: "center" }}>
-                      <h4 style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: "8px" }}>Total Students</h4>
-                      <p style={{ fontSize: "2rem", fontWeight: "bold", color: "var(--color-primary)" }}>{analytics.metrics.totalStudents}</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "20px", marginBottom: "32px" }}>
+                    <div className="stat-card" style={{ padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(15,23,42,0.04)" }}>
+                      <div style={{ width: 42, height: 42, borderRadius: "12px", background: "rgba(99,102,241,0.12)", color: "#4f46e5", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                          <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                        </svg>
+                      </div>
+                      <div className="stat-card-label" style={{ marginBottom: 6, fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Total Students</div>
+                      <strong style={{ fontSize: "2.4rem", fontWeight: 900, color: "#0f172a", lineHeight: 1.1, display: "block", marginBottom: 4 }}>{analytics.metrics.totalStudents}</strong>
+                      <span style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 500 }}>Enrolled university candidates</span>
                     </div>
-                    <div style={{ padding: "20px", background: "var(--color-bg-hover)", borderRadius: "8px", border: "1px solid var(--color-border)", textAlign: "center" }}>
-                      <h4 style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: "8px" }}>Total Companies</h4>
-                      <p style={{ fontSize: "2rem", fontWeight: "bold", color: "var(--color-primary)" }}>{analytics.metrics.totalCompanies}</p>
+
+                    <div className="stat-card" style={{ padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(15,23,42,0.04)" }}>
+                      <div style={{ width: 42, height: 42, borderRadius: "12px", background: "rgba(139,92,246,0.12)", color: "#7c3aed", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                        </svg>
+                      </div>
+                      <div className="stat-card-label" style={{ marginBottom: 6, fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Partner Companies</div>
+                      <strong style={{ fontSize: "2.4rem", fontWeight: 900, color: "#7c3aed", lineHeight: 1.1, display: "block", marginBottom: 4 }}>{analytics.metrics.totalCompanies}</strong>
+                      <span style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 500 }}>Registered recruiters</span>
                     </div>
-                    <div style={{ padding: "20px", background: "var(--color-bg-hover)", borderRadius: "8px", border: "1px solid var(--color-border)", textAlign: "center" }}>
-                      <h4 style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: "8px" }}>Total Jobs</h4>
-                      <p style={{ fontSize: "2rem", fontWeight: "bold", color: "var(--color-primary)" }}>{analytics.metrics.totalJobs}</p>
+
+                    <div className="stat-card" style={{ padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(15,23,42,0.04)" }}>
+                      <div style={{ width: 42, height: 42, borderRadius: "12px", background: "rgba(245,158,11,0.12)", color: "#d97706", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                          <path d="M16 3v4M8 3v4" />
+                        </svg>
+                      </div>
+                      <div className="stat-card-label" style={{ marginBottom: 6, fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Job Openings</div>
+                      <strong style={{ fontSize: "2.4rem", fontWeight: 900, color: "#d97706", lineHeight: 1.1, display: "block", marginBottom: 4 }}>{analytics.metrics.totalJobs}</strong>
+                      <span style={{ fontSize: "0.82rem", color: "#64748b", fontWeight: 500 }}>Active hiring opportunities</span>
                     </div>
-                    <div style={{ padding: "20px", background: "var(--color-bg-hover)", borderRadius: "8px", border: "1px solid var(--color-border)", textAlign: "center" }}>
-                      <h4 style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginBottom: "8px" }}>Students Placed</h4>
-                      <p style={{ fontSize: "2rem", fontWeight: "bold", color: "#10b981" }}>{analytics.metrics.totalPlacements}</p>
+
+                    <div className="stat-card" style={{ padding: "24px", background: "#ffffff", borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(15,23,42,0.04)" }}>
+                      <div style={{ width: 42, height: 42, borderRadius: "12px", background: "rgba(16,185,129,0.12)", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                          <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                          <path d="M4 22h16" />
+                          <path d="M10 14.66V17c0 .55-.45 1-1 1H7" />
+                          <path d="M14 14.66V17c0 .55.45 1 1 1h2" />
+                          <path d="M18 2H6v7a6 6 0 0 0 12 0V2z" />
+                        </svg>
+                      </div>
+                      <div className="stat-card-label" style={{ marginBottom: 6, fontSize: "0.76rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.08em" }}>Students Placed</div>
+                      <strong style={{ fontSize: "2.4rem", fontWeight: 900, color: "#059669", lineHeight: 1.1, display: "block", marginBottom: 4 }}>{analytics.metrics.totalPlacements}</strong>
+                      <span style={{ fontSize: "0.82rem", color: "#059669", fontWeight: 700 }}>
+                        {analytics.metrics.totalStudents ? Math.round((analytics.metrics.totalPlacements / analytics.metrics.totalStudents) * 100) : 0}% Placement Rate
+                      </span>
                     </div>
                   </div>
 
-                  <div style={{ background: "var(--color-bg-hover)", padding: "20px", borderRadius: "8px", border: "1px solid var(--color-border)", marginBottom: "30px" }}>
-                    <h4 style={{ marginBottom: "16px" }}>Top Performers by CGPA</h4>
+                  {/* Leaderboard Card */}
+                  <div style={{ background: "#ffffff", padding: "28px", borderRadius: "20px", border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(15,23,42,0.03)", marginBottom: "32px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px", flexWrap: "wrap", gap: 10 }}>
+                      <div>
+                        <h4 style={{ fontSize: "1.18rem", fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>
+                          Academic Honor Roll — Top Performers
+                        </h4>
+                        <p style={{ margin: 0, fontSize: "0.86rem", color: "#64748b" }}>Ranked by cumulative grade point average (CGPA) across departments</p>
+                      </div>
+                      <span style={{ background: "rgba(99,102,241,0.1)", color: "#4f46e5", fontSize: "0.75rem", fontWeight: 700, padding: "5px 12px", borderRadius: "999px" }}>
+                        Top {analytics.topStudents?.length || 0} Students
+                      </span>
+                    </div>
+
                     {analytics.topStudents && analytics.topStudents.length > 0 ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         {analytics.topStudents.map((s, idx) => (
-                          <div key={s._id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "var(--color-bg-subtle)", borderRadius: "6px", border: "1px solid var(--color-border)" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <span style={{ fontWeight: "bold", color: "var(--color-primary)" }}>#{idx + 1}</span>
+                          <div
+                            key={s._id}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              padding: "14px 18px",
+                              background: idx === 0 ? "linear-gradient(135deg, rgba(254,243,199,0.4) 0%, #ffffff 100%)" : "#fafafa",
+                              borderRadius: "12px",
+                              border: idx === 0 ? "1px solid #fde68a" : "1px solid #f1f5f9",
+                              transition: "all 0.2s ease",
+                              flexWrap: "wrap",
+                              gap: 12,
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                              <span
+                                style={{
+                                  fontWeight: 800,
+                                  fontSize: "0.82rem",
+                                  padding: "4px 10px",
+                                  borderRadius: "8px",
+                                  background: idx === 0 ? "#fef3c7" : idx === 1 ? "#f1f5f9" : idx === 2 ? "#fed7aa" : "#f8fafc",
+                                  color: idx === 0 ? "#b45309" : idx === 1 ? "#475569" : idx === 2 ? "#c2410c" : "#64748b",
+                                  border: "1px solid " + (idx === 0 ? "#fde68a" : idx === 1 ? "#e2e8f0" : idx === 2 ? "#fdba74" : "#e2e8f0"),
+                                }}
+                              >
+                                {`#${idx + 1}`}
+                              </span>
                               <div>
-                                <strong style={{ display: "block" }}>{s.name}</strong>
-                                <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{s.branch || "N/A"}</span>
+                                <strong style={{ display: "block", color: "#0f172a", fontSize: "0.95rem" }}>{s.name}</strong>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+                                  <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#4f46e5", background: "#eef2ff", padding: "1px 7px", borderRadius: "4px" }}>
+                                    {s.branch || "General"}
+                                  </span>
+                                  {s.email && <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{s.email}</span>}
+                                </div>
                               </div>
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              <span className={`badge ${s.placementStatus === "Placed" ? "badge-placed" : "badge-notplaced"}`}>{s.placementStatus}</span>
-                              <strong style={{ color: "#10b981" }}>{s.cgpa ?? "N/A"}</strong>
+                            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                              <span className={`badge ${s.placementStatus === "Placed" ? "badge-placed" : "badge-notplaced"}`}>
+                                {s.placementStatus === "Placed" ? "Placed" : "Not Placed"}
+                              </span>
+                              <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", padding: "6px 14px", borderRadius: "10px", textAlign: "right" }}>
+                                <span style={{ display: "block", fontSize: "0.68rem", fontWeight: 700, color: "#059669", textTransform: "uppercase", letterSpacing: "0.05em" }}>CGPA</span>
+                                <strong style={{ color: "#047857", fontSize: "1.08rem", fontWeight: 900 }}>{s.cgpa != null ? Number(s.cgpa).toFixed(2) : "N/A"}</strong>
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p style={{ color: "var(--color-text-muted)" }}>No student CGPA data available yet.</p>
+                      <p style={{ color: "#64748b", textAlign: "center", padding: "30px 0" }}>No student CGPA data available yet.</p>
                     )}
                   </div>
 
-                  <div style={{ background: "var(--color-bg-hover)", padding: "20px", borderRadius: "8px", border: "1px solid var(--color-border)" }}>
-                    <h4 style={{ marginBottom: "20px" }}>Placements by Branch</h4>
+                  {/* Branch Chart Card */}
+                  <div style={{ background: "#ffffff", padding: "28px", borderRadius: "20px", border: "1px solid #e2e8f0", boxShadow: "0 4px 16px rgba(15,23,42,0.03)" }}>
+                    <div style={{ marginBottom: "24px" }}>
+                      <h4 style={{ fontSize: "1.18rem", fontWeight: 800, color: "#0f172a", marginBottom: 4 }}>Placements by Branch</h4>
+                      <p style={{ margin: 0, fontSize: "0.86rem", color: "#64748b" }}>Total number of students hired per academic department</p>
+                    </div>
                     {analytics.branchData && analytics.branchData.length > 0 ? (
-                      <div style={{ height: 300 }}>
+                      <div style={{ height: 320 }}>
                         <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={analytics.branchData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                            <XAxis dataKey="name" stroke="var(--color-text-muted)" />
-                            <YAxis stroke="var(--color-text-muted)" allowDecimals={false} />
-                            <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ backgroundColor: 'var(--color-bg-hover)', border: '1px solid var(--color-border)', borderRadius: '8px' }} />
-                            <Bar dataKey="placed" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                          <BarChart data={analytics.branchData} margin={{ top: 10, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                            <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={{ stroke: '#e2e8f0' }} />
+                            <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={{ stroke: '#e2e8f0' }} allowDecimals={false} />
+                            <Tooltip
+                              cursor={{ fill: 'rgba(99,102,241,0.06)' }}
+                              contentStyle={{ backgroundColor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 8px 24px rgba(15,23,42,0.12)', padding: '10px 14px' }}
+                              formatter={(value) => [`${value} Students Hired`, "Placements"]}
+                            />
+                            <Bar dataKey="placed" fill="#6366f1" radius={[8, 8, 0, 0]} maxBarSize={56} />
                           </BarChart>
                         </ResponsiveContainer>
                       </div>
                     ) : (
-                      <p style={{ color: "var(--color-text-muted)" }}>No placement data available for chart yet.</p>
+                      <p style={{ color: "#64748b", textAlign: "center", padding: "40px 0" }}>No placement data available for chart yet.</p>
                     )}
                   </div>
                 </>
               ) : (
-                <p>Loading analytics data...</p>
+                <p style={{ color: "#64748b" }}>Loading analytics data...</p>
               )}
             </div>
           )}
@@ -345,9 +514,25 @@ function AdminDashboard() {
                 )}
                 {companies.map((c) => (
                   <div className="row-card" key={c._id}>
-                    <div className="card-info">
-                      <h4>{c.name}</h4>
-                      <p>{c.email}{c.headquarters ? ` · ${c.headquarters}` : ""}</p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0, flex: 1 }}>
+                      <div className="company-logo-frame">
+                        {c.logoUrl ? (
+                          <img
+                            src={resolveFileUrl(c.logoUrl)}
+                            alt={`${c.name} logo`}
+                            className="company-logo-img"
+                            onError={(e) => { e.target.style.display = "none"; }}
+                          />
+                        ) : (
+                          <div className="company-logo-placeholder" style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {(c.name || "C").charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div className="card-info" style={{ minWidth: 0, flex: 1 }}>
+                        <h4 style={{ margin: 0, marginBottom: 4 }}>{c.name}</h4>
+                        <p style={{ margin: 0 }}>{c.email}{c.headquarters ? ` · ${c.headquarters}` : ""}</p>
+                      </div>
                     </div>
                     <div className="card-actions">
                       <button className="btn-danger" onClick={() => handleDeleteCompany(c._id)}>Remove</button>
@@ -394,32 +579,182 @@ function AdminDashboard() {
             </div>
           )}
 
-          {tab === "students" && (
-            <div className="dash-section">
-              <div className="dash-section-header">
-                <h3>All Students <span className="dash-section-count">{students.length}</span></h3>
-              </div>
-              <div className="list">
-                {students.length === 0 && (
-                  <div className="empty-state"><p>No students registered yet.</p></div>
-                )}
-                {students.map((s) => (
-                  <div className="row-card" key={s._id}>
-                    <div className="card-info">
-                      <h4>{s.name}</h4>
-                      <p>{s.email}{s.branch ? ` · ${s.branch}` : ""}{s.cgpa != null ? ` · CGPA ${s.cgpa}` : ""}</p>
-                    </div>
-                    <div className="card-actions">
-                      <span className={`badge ${s.placementStatus === "Placed" ? "badge-placed" : "badge-notplaced"}`}>
-                        {s.placementStatus === "Placed" ? `Placed @ ${s.placedCompany}` : "Not Placed"}
-                      </span>
-                      <button className="btn-danger" onClick={() => handleDeleteStudent(s._id)}>Delete</button>
-                    </div>
+          {tab === "students" && (() => {
+            const filteredAndSortedStudents = students.filter((s) => {
+              if (studentStatusFilter === "notplaced" && s.placementStatus === "Placed") return false;
+              if (studentStatusFilter === "placed" && s.placementStatus !== "Placed") return false;
+              if (studentSkillSearch.trim()) {
+                const term = studentSkillSearch.trim().toLowerCase();
+                const matchesSkill = s.skills?.some((sk) => sk.toLowerCase().includes(term));
+                const matchesName = s.name?.toLowerCase().includes(term);
+                const matchesBranch = s.branch?.toLowerCase().includes(term);
+                if (!matchesSkill && !matchesName && !matchesBranch) return false;
+              }
+              return true;
+            }).sort((a, b) => {
+              if (studentSortBy === "cgpa_desc") {
+                return (b.cgpa || 0) - (a.cgpa || 0);
+              }
+              if (studentSortBy === "cgpa_asc") {
+                return (a.cgpa || 0) - (b.cgpa || 0);
+              }
+              if (studentSortBy === "skills_desc") {
+                return (b.skills?.length || 0) - (a.skills?.length || 0);
+              }
+              if (studentSortBy === "name_asc") {
+                return (a.name || "").localeCompare(b.name || "");
+              }
+              return 0; // "recent"
+            });
+
+            const isFilterActive = studentSkillSearch.trim() !== "" || studentStatusFilter !== "all" || studentSortBy !== "cgpa_desc";
+
+            return (
+              <div className="dash-section">
+                <div className="dash-section-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                  <h3>All Students <span className="dash-section-count">{students.length}</span></h3>
+                  <span style={{ fontSize: "0.85rem", color: "#64748b" }}>
+                    Showing <strong>{filteredAndSortedStudents.length}</strong> of {students.length}
+                  </span>
+                </div>
+                <p style={{ color: "var(--color-text-muted)", marginBottom: 16, fontSize: "0.9rem" }}>
+                  Sort according to CGPA, filter by resume skill keywords, review academic credentials and resumes.
+                </p>
+
+                {/* Filter and Sort Toolbar */}
+                <div className="student-filter-toolbar">
+                  <div className="filter-search-box">
+                    <span className="filter-search-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8" />
+                        <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Search skill keyword (e.g. React, Python, SQL)..."
+                      value={studentSkillSearch}
+                      onChange={(e) => setStudentSkillSearch(e.target.value)}
+                    />
                   </div>
-                ))}
+
+                  <select
+                    className="filter-select"
+                    value={studentSortBy}
+                    onChange={(e) => setStudentSortBy(e.target.value)}
+                    title="Sort students"
+                  >
+                    <option value="cgpa_desc">Sort by: Highest CGPA</option>
+                    <option value="skills_desc">Sort by: Most Skills (Resume)</option>
+                    <option value="cgpa_asc">Sort by: Lowest CGPA</option>
+                    <option value="name_asc">Sort by: Name (A to Z)</option>
+                    <option value="recent">Sort by: Recently Registered</option>
+                  </select>
+
+                  <select
+                    className="filter-select"
+                    value={studentStatusFilter}
+                    onChange={(e) => setStudentStatusFilter(e.target.value)}
+                    title="Filter by placement status"
+                  >
+                    <option value="all">Status: All Students</option>
+                    <option value="notplaced">Status: Not Placed</option>
+                    <option value="placed">Status: Placed</option>
+                  </select>
+
+                  {isFilterActive && (
+                    <button
+                      type="button"
+                      className="filter-reset-btn"
+                      onClick={() => {
+                        setStudentSkillSearch("");
+                        setStudentStatusFilter("all");
+                        setStudentSortBy("cgpa_desc");
+                      }}
+                    >
+                      Reset Filters
+                    </button>
+                  )}
+                </div>
+
+                <div className="list">
+                  {filteredAndSortedStudents.length === 0 ? (
+                    <div className="empty-state">
+                      <p>No students match your filter criteria.</p>
+                      {isFilterActive && (
+                        <button
+                          type="button"
+                          className="btn-secondary-sm"
+                          style={{ marginTop: 10 }}
+                          onClick={() => {
+                            setStudentSkillSearch("");
+                            setStudentStatusFilter("all");
+                            setStudentSortBy("cgpa_desc");
+                          }}
+                        >
+                          Clear Filters
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    filteredAndSortedStudents.map((s) => {
+                      const searchLower = studentSkillSearch.trim().toLowerCase();
+                      return (
+                        <div className="row-card" key={s._id}>
+                          <div className="card-info">
+                            <h4>
+                              {s.name}
+                              {s.cgpa >= 9 && <span className="top-performer-badge" title="Top CGPA">Top Performer</span>}
+                            </h4>
+                            <p>{s.email}{s.branch ? ` · ${s.branch}` : ""}{s.cgpa != null ? ` · CGPA ${s.cgpa}` : ""}</p>
+                            
+                            {s.skills?.length > 0 && (
+                              <div className="student-skills-list">
+                                {s.skills.map((skill, i) => {
+                                  const isMatched = searchLower && skill.toLowerCase().includes(searchLower);
+                                  return (
+                                    <span
+                                      key={i}
+                                      className={`student-skill-chip ${isMatched ? "student-skill-chip-matched" : ""}`}
+                                    >
+                                      {skill}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            )}
+
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
+                              <span className={`badge ${s.placementStatus === "Placed" ? "badge-placed-subtle" : "badge-notplaced"}`}>
+                                {s.placementStatus === "Placed" ? `✓ Placed @ ${s.placedCompany}` : "Active Candidate"}
+                              </span>
+                              {s.resumeLink ? (
+                                <a
+                                  href={resolveFileUrl(s.resumeLink)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{ fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", color: "#4338ca", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "6px", padding: "3px 9px" }}
+                                >
+                                  View Resume
+                                </a>
+                              ) : (
+                                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "3px 9px" }}>
+                                  Resume not uploaded
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="card-actions">
+                            <button className="btn-danger" onClick={() => handleDeleteStudent(s._id)}>Delete</button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {tab === "markHired" && (
             <div className="dash-section">
@@ -455,7 +790,7 @@ function AdminDashboard() {
                 <label>Eligibility Criteria Used
                   <input value={hireForm.eligibility} onChange={(e) => setHireForm({ ...hireForm, eligibility: e.target.value })} placeholder="e.g. CSE/ISE, CGPA 7+" />
                 </label>
-                <button className="btn-primary-full" type="submit">✓ Confirm Placement</button>
+                <button className="btn-primary" type="submit" style={{ marginTop: "10px", width: "fit-content", minWidth: "200px", padding: "12px 28px", justifySelf: "start" }}>Confirm Placement</button>
               </form>
             </div>
           )}
@@ -531,6 +866,8 @@ function AdminDashboard() {
               </div>
             </div>
           )}
+
+
         </div>
       </main>
     </div>

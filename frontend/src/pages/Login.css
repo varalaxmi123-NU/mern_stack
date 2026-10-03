@@ -231,6 +231,25 @@
   overflow-y: auto;
 }
 
+/* Back to Home Link (Text Link style like Create account) */
+.back-to-home-bottom-link,
+.back-to-home-text-link {
+  display: inline-block !important;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  color: #6366f1 !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.back-to-home-bottom-link:hover,
+.back-to-home-text-link:hover {
+  color: #4f46e5 !important;
+  text-decoration: underline !important;
+}
+
+
 /* Subtle dot grid on right */
 .login-right::before {
   content: '';
@@ -267,7 +286,7 @@
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
-  padding: 44px 40px;
+  padding: 38px 40px 42px;
   box-shadow:
     0 4px 6px rgba(15,23,42,0.04),
     0 16px 48px rgba(15,23,42,0.10),
@@ -279,6 +298,8 @@
   from { opacity: 0; transform: translateY(28px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)  scale(1); }
 }
+
+
 
 /* Glowing border on hover */
 .login-card::before {
@@ -447,19 +468,29 @@
   width: 100%;
   height: 50px;
   margin-top: 6px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #9333ea 100%);
+  background-size: 200% auto;
   color: #fff;
   border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  border-radius: 12px;
+  font-size: 0.96rem;
   font-weight: 700;
   cursor: pointer;
   overflow: hidden;
-  transition: all 0.22s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
-  letter-spacing: 0.01em;
-  box-shadow: 0 4px 16px rgba(99,102,241,0.3), 0 1px 3px rgba(99,102,241,0.2);
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.35), 0 2px 4px rgba(124, 58, 237, 0.2);
   animation: slideUpFade 0.5s ease 0.5s both;
+}
+
+.btn-login .btn-login-arrow {
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
 }
 
 /* Shimmer sweep on button */
@@ -481,9 +512,13 @@
 }
 
 .btn-login:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background-position: right center;
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(99,102,241,0.4);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.45), 0 3px 8px rgba(147, 51, 234, 0.25);
+}
+
+.btn-login:hover .btn-login-arrow {
+  transform: translateX(4px);
 }
 
 .btn-login:active {
