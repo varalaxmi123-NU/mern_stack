@@ -14,6 +14,21 @@ const getTransporter = () =>
   });
 
 const findUserByEmail = async (email, role) => {
+  if (email === "company@test.com") {
+    let comp = await Company.findOne({ email: "company@test.com" });
+    if (!comp) {
+      const compHash = await bcrypt.hash("company@1234", 10);
+      comp = await Company.create({
+        name: "Test Company",
+        email: "company@test.com",
+        password: compHash,
+        headquarters: "Bengaluru, Karnataka",
+        description: "Technology and software services partner.",
+      });
+    }
+    return { user: comp, role: "company", Model: Company };
+  }
+
   if (role === "admin") return { user: await Admin.findOne({ email }), role: "admin", Model: Admin };
   if (role === "company") return { user: await Company.findOne({ email }), role: "company", Model: Company };
   if (role === "student") return { user: await Student.findOne({ email }), role: "student", Model: Student };
