@@ -98,6 +98,3 @@ The application will be accessible at `http://localhost:5173`.
 
 - **Frontend**: Deployed on Vercel
 - **Backend**: Node.js REST API service connected to MongoDB Atlas
-
-## License
-Distributed under the ISC License.
