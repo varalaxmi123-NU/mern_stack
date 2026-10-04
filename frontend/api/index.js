@@ -1,17 +1,14 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
 
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-
-const connectDB = require("./backend/config/db");
-const studentRoutes = require("./backend/routes/studentRoutes");
-const authRoutes = require("./backend/routes/authRoutes");
-const jobRoutes = require("./backend/routes/jobRoutes");
-const companyRoutes = require("./backend/routes/companyRoutes");
-const adminRoutes = require("./backend/routes/adminRoutes");
-const placementRoutes = require("./backend/routes/placementRoutes");
+import connectDB from "./backend/config/db.js";
+import studentRoutes from "./backend/routes/studentRoutes.js";
+import authRoutes from "./backend/routes/authRoutes.js";
+import jobRoutes from "./backend/routes/jobRoutes.js";
+import companyRoutes from "./backend/routes/companyRoutes.js";
+import adminRoutes from "./backend/routes/adminRoutes.js";
+import placementRoutes from "./backend/routes/placementRoutes.js";
 
 const app = express();
 
