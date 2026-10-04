@@ -33,17 +33,17 @@ try {
 } catch (e) {}
 
 const createDefaultStudentPdf = (student) => {
-  const name = (student && student.name) ? student.name : 'Candidate Resume Profile';
-  const email = (student && student.email) ? student.email : 'candidate@campushire.edu';
-  const branch = (student && student.branch) ? student.branch : 'Computer Science & Engineering';
-  const cgpa = (student && student.cgpa != null) ? student.cgpa : '8.5';
-  const skills = (student && student.skills && student.skills.length > 0) 
-    ? (Array.isArray(student.skills) ? student.skills.join(', ') : student.skills) 
-    : 'Full Stack Web Development, React.js, Node.js, SQL';
+  const name = student?.name || "Student Candidate";
+  const email = student?.email || "N/A";
+  const branch = student?.branch || "N/A";
+  const cgpa = student?.cgpa != null ? String(student.cgpa) : "N/A";
+  const skills = Array.isArray(student?.skills) && student.skills.length > 0
+    ? student.skills.join(", ")
+    : (student?.skills || "N/A");
 
   const sanitize = (str) => String(str).replace(/[()\\\r\n]/g, ' ');
 
-  const streamContent = 'BT\n/F1 22 Tf\n50 730 Td\n(' + sanitize(name) + ') Tj\n/F2 12 Tf\n0 -24 Td\n(Official Verified Student Resume Profile) Tj\n0 -25 Td\n(--------------------------------------------------------------------------------------------------) Tj\n0 -30 Td\n/F1 14 Tf\n(CONTACT INFORMATION) Tj\n/F2 12 Tf\n0 -20 Td\n(Email: ' + sanitize(email) + ') Tj\n0 -20 Td\n(Status: Verified Campus Candidate) Tj\n0 -30 Td\n/F1 14 Tf\n(ACADEMIC PROFILE) Tj\n/F2 12 Tf\n0 -20 Td\n(Department / Branch: ' + sanitize(branch) + ') Tj\n0 -20 Td\n(Cumulative GPA: ' + sanitize(cgpa) + ') Tj\n0 -30 Td\n/F1 14 Tf\n(SKILLS & COMPETENCIES) Tj\n/F2 12 Tf\n0 -20 Td\n(' + sanitize(skills) + ') Tj\n0 -40 Td\n(--------------------------------------------------------------------------------------------------) Tj\n0 -20 Td\n/F2 10 Tf\n(Campus Placement Portal - Verified Digital Profile) Tj\nET';
+  const streamContent = 'BT\n/F1 22 Tf\n50 730 Td\n(' + sanitize(name) + ' - Student Resume) Tj\n/F2 12 Tf\n0 -24 Td\n(Official Verified Student Profile) Tj\n0 -25 Td\n(--------------------------------------------------------------------------------------------------) Tj\n0 -30 Td\n/F1 14 Tf\n(CONTACT INFORMATION) Tj\n/F2 12 Tf\n0 -20 Td\n(Email: ' + sanitize(email) + ') Tj\n0 -20 Td\n(Status: Verified Campus Candidate) Tj\n0 -30 Td\n/F1 14 Tf\n(ACADEMIC PROFILE) Tj\n/F2 12 Tf\n0 -20 Td\n(Department / Branch: ' + sanitize(branch) + ') Tj\n0 -20 Td\n(Cumulative GPA: ' + sanitize(cgpa) + ') Tj\n0 -30 Td\n/F1 14 Tf\n(SKILLS & COMPETENCIES) Tj\n/F2 12 Tf\n0 -20 Td\n(' + sanitize(skills) + ') Tj\n0 -40 Td\n(--------------------------------------------------------------------------------------------------) Tj\n0 -20 Td\n/F2 10 Tf\n(Campus Placement Portal - Verified Digital Resume) Tj\nET';
 
   const streamLength = Buffer.byteLength(streamContent, 'utf-8');
 
