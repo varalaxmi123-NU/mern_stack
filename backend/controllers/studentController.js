@@ -60,15 +60,19 @@ exports.uploadResume = async (req, res) => {
     const path = require("path");
     const fs = require("fs");
 
-    if (path.extname(req.file.originalname).toLowerCase() !== ".pdf") {
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    const ext = path.extname(req.file.originalname || "").toLowerCase();
+    if (ext && ext !== ".pdf" && req.file.mimetype !== "application/pdf") {
+      if (req.file.path && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({ message: "Only PDF files (.pdf) are allowed" });
     }
 
-    const resumeUrl = `/uploads/resumes/${req.file.filename}`;
+    const filename = req.file.filename || `${req.user.id}-${Date.now()}.pdf`;
+    const resumeUrl = `/uploads/resumes/${filename}`;
     let resumeData = "";
 
-    if (fs.existsSync(req.file.path)) {
+    if (req.file.buffer) {
+      resumeData = req.file.buffer.toString("base64");
+    } else if (req.file.path && fs.existsSync(req.file.path)) {
       const fileBuffer = fs.readFileSync(req.file.path);
       resumeData = fileBuffer.toString("base64");
     }
