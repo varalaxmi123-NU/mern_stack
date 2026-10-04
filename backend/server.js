@@ -43,26 +43,40 @@ const ensureSeedData = async () => {
 };
 
 const app = express();
-connectDB().then(ensureSeedData).catch((err) => console.error("Init DB error:", err));
+
+let seedDone = false;
+const safeSeed = async () => {
+  if (seedDone) return;
+  seedDone = true;
+  await ensureSeedData();
+};
+
+connectDB().then(safeSeed).catch((err) => console.error("Init DB error:", err));
 
 // Make sure the uploads folder exists (safely handle read-only serverless filesystems)
-const uploadsDir = path.join(__dirname, "uploads");
+const uploadsDir = process.env.VERCEL ? path.join("/tmp", "uploads") : path.join(__dirname, "uploads");
 try {
   fs.mkdirSync(path.join(uploadsDir, "resumes"), { recursive: true });
   fs.mkdirSync(path.join(uploadsDir, "logos"), { recursive: true });
 } catch (e) {
   // Read-only filesystem on serverless environments
 }
-console.log(`📁 Serving uploaded files from: ${uploadsDir}`);
-console.log(`   (if a resume 404s, check the exact file exists inside ${path.join(uploadsDir, "resumes")})`);
 
 app.use(cors());
 app.use(express.json());
 
 // Ensure DB is connected on every serverless execution
 app.use(async (req, res, next) => {
-  await connectDB();
-  next();
+  try {
+    await connectDB();
+    if (!seedDone && mongoose.connection.readyState >= 1) {
+      safeSeed().catch(() => {});
+    }
+    next();
+  } catch (err) {
+    console.error("Database connection middleware error:", err);
+    res.status(500).json({ error: "Database Connection Failed", message: err.message });
+  }
 });
 
 app.use('/uploads', express.static(uploadsDir));
