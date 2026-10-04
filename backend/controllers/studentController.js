@@ -9,14 +9,14 @@ exports.getProfile = async (req, res) => {
     const student = await Student.findById(req.user.id).select("-password");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
-    // Validate that the uploaded resume actually exists on the server disk
-    if (student.resumeLink && student.resumeLink.startsWith("/uploads/resumes/")) {
+    // Validate that the uploaded resume actually exists on local server disk (only in local non-Vercel dev mode)
+    if (!process.env.VERCEL && student.resumeLink && student.resumeLink.startsWith("/uploads/resumes/")) {
       const fs = require("fs");
       const path = require("path");
       const filename = path.basename(student.resumeLink);
       const filePath = path.join(__dirname, "..", "uploads", "resumes", filename);
       if (!fs.existsSync(filePath)) {
-        // File is missing on disk. Clear the stale link so UI doesn't point to a 404
+        // File is missing on local disk. Clear the stale link so UI doesn't point to a 404
         student.resumeLink = "";
         await Student.findByIdAndUpdate(req.user.id, { resumeLink: "" });
       }

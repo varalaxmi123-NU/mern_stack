@@ -115,11 +115,14 @@ function StudentDashboard() {
     e.preventDefault();
     if (!user?.resumeLink) return;
     const url = resolveFileUrl(user.resumeLink);
+    if (/^https?:\/\//i.test(url)) {
+      window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
     try {
       const res = await fetch(url, { method: "HEAD" });
       if (!res.ok) {
-        setError("Resume file not found on the server. Please upload your latest resume again using the button above.");
-        setUser((prev) => ({ ...prev, resumeLink: "" }));
+        setError("Resume file not found on the server container. Please upload your latest resume again using the button below.");
         return;
       }
       window.open(url, "_blank", "noopener,noreferrer");
@@ -593,7 +596,7 @@ function StudentDashboard() {
                 />
                 {resumeFileName && <span className="file-upload-name">{resumeFileName}</span>}
                 <div className="resume-upload-footer">
-                {user?.resumeLink && user.resumeLink.startsWith("/uploads") ? (
+                {user?.resumeLink ? (
                   <a
                     href={resolveFileUrl(user.resumeLink)}
                     onClick={handleViewResume}
@@ -605,11 +608,11 @@ function StudentDashboard() {
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
-                    View Current Uploaded Resume
+                    View Current Resume ({user.resumeLink.startsWith("/uploads") ? "Uploaded PDF" : "External Link"})
                   </a>
                 ) : (
                   <p style={{ margin: 0, fontSize: "0.86rem", color: "var(--color-text-muted)" }}>
-                    No resume uploaded yet. Click &ldquo;Choose File&rdquo; above to upload your PDF resume.
+                    No resume uploaded or linked yet. Click &ldquo;Choose File&rdquo; above to upload your PDF resume.
                   </p>
                 )}
                 </div>
