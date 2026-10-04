@@ -1,24 +1,17 @@
 import { createRequire } from "module";
-import fs from "fs";
-
 const require = createRequire(import.meta.url);
 
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
-let backendDir = "./backend";
-if (!fs.existsSync(backendDir) && fs.existsSync("../../backend")) {
-  backendDir = "../../backend";
-}
-
-const connectDB = require(`${backendDir}/config/db`);
-const studentRoutes = require(`${backendDir}/routes/studentRoutes`);
-const authRoutes = require(`${backendDir}/routes/authRoutes`);
-const jobRoutes = require(`${backendDir}/routes/jobRoutes`);
-const companyRoutes = require(`${backendDir}/routes/companyRoutes`);
-const adminRoutes = require(`${backendDir}/routes/adminRoutes`);
-const placementRoutes = require(`${backendDir}/routes/placementRoutes`);
+const connectDB = require("./backend/config/db");
+const studentRoutes = require("./backend/routes/studentRoutes");
+const authRoutes = require("./backend/routes/authRoutes");
+const jobRoutes = require("./backend/routes/jobRoutes");
+const companyRoutes = require("./backend/routes/companyRoutes");
+const adminRoutes = require("./backend/routes/adminRoutes");
+const placementRoutes = require("./backend/routes/placementRoutes");
 
 const app = express();
 
