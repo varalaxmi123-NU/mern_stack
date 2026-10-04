@@ -314,15 +314,6 @@ function StudentDashboard() {
               <div className="dash-section-header">
                 <h3>Open Opportunities <span className="dash-section-count">{jobs.length}</span></h3>
               </div>
-              {(!user?.skills || user.skills.length === 0) && (
-                <div className="skills-nudge">
-                  <div className="skills-nudge-text">
-                    <strong>Add your skills to unlock ATS match scores.</strong>
-                    <p>You haven't listed any skills yet, so jobs can't show how well you match. Add them to your profile — it only takes a minute.</p>
-                  </div>
-                  <button className="btn-secondary-sm" onClick={() => handleTabClick("profile")}>Add Skills</button>
-                </div>
-              )}
               <div className="job-list">
                 {jobs.length === 0 && (
                   <div className="empty-state">
@@ -331,11 +322,7 @@ function StudentDashboard() {
                 )}
                 {jobs.map((job) => {
                   const isApplied = appliedJobIds.has(job._id);
-                  const jobSkills = (job.skills || []).map((s) => s.trim().toLowerCase()).filter(Boolean);
-                  const mySkills = new Set((user?.skills || []).map((s) => s.trim().toLowerCase()).filter(Boolean));
-                  const matched = jobSkills.filter((s) => mySkills.has(s));
-                  const missing = jobSkills.filter((s) => !mySkills.has(s));
-                  const matchScore = jobSkills.length > 0 ? Math.round((matched.length / jobSkills.length) * 100) : null;
+                  const jobSkills = (job.skills || []).map((s) => s.trim()).filter(Boolean);
                   return (
                     <div className="job-card" key={job._id}>
                       <div className="job-card-main-row" style={{ display: "flex", gap: "16px", flex: 1, minWidth: 0 }}>
@@ -357,14 +344,6 @@ function StudentDashboard() {
                           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px", flexWrap: "wrap" }}>
                             <h4 style={{ margin: 0 }}>{job.title}{job.company?.name ? ` — ${job.company.name}` : ""}</h4>
                             <span className="badge badge-open">Open</span>
-                            {matchScore !== null && (
-                              <span
-                                className={`match-badge ${matchScore >= 70 ? "match-high" : matchScore >= 40 ? "match-mid" : "match-low"}`}
-                                title={missing.length ? `Missing: ${missing.join(", ")}` : "You match every required skill"}
-                              >
-                                {matchScore}% Match
-                              </span>
-                            )}
                           </div>
                           <p>{job.description}</p>
                           <div className="job-meta">
@@ -373,11 +352,8 @@ function StudentDashboard() {
                             {job.eligibility && <span className="meta-tag">Req: {job.eligibility}</span>}
                             {job.minCgpa > 0 && <span className="meta-tag">Min CGPA: {job.minCgpa}</span>}
                             {job.allowedBranches?.length > 0 && <span className="meta-tag">Branches: {job.allowedBranches.join(", ")}</span>}
-                            {jobSkills.length > 0 && <span className="meta-tag">Skills: {job.skills.join(", ")}</span>}
+                            {jobSkills.length > 0 && <span className="meta-tag">Required Skills: {job.skills.join(", ")}</span>}
                           </div>
-                          {matchScore !== null && missing.length > 0 && (
-                            <p className="match-missing-note">Add these skills to your profile to improve your match: {missing.join(", ")}</p>
-                          )}
                         </div>
                       </div>
                       <div className="card-actions">
@@ -549,7 +525,7 @@ function StudentDashboard() {
               </div>
 
               <p style={{ color: "var(--color-text-muted)", marginBottom: 20, fontSize: "0.9rem" }}>
-                Make sure your CGPA, Skills, and Resume are up to date — companies can't see your ATS match score until you add your skills below!
+                Keep your academic details, technical skills, and resume updated for company recruiters.
               </p>
               <form className="dash-form" onSubmit={handleProfileSave}>
                 <label>Branch
@@ -567,12 +543,9 @@ function StudentDashboard() {
                   <input type="number" step="0.01" placeholder="e.g. 8.5" value={profileForm.cgpa} onChange={(e) => setProfileForm({ ...profileForm, cgpa: e.target.value })} />
                 </label>
                 <label className="full-span">
-                  Skills (comma-separated) — required for ATS match scoring
+                  Skills (comma-separated)
                   <input placeholder="e.g. React, Node.js, SQL, Python" value={profileForm.skills} onChange={(e) => setProfileForm({ ...profileForm, skills: e.target.value })} />
                 </label>
-                <p className="full-span" style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "-6px" }}>
-                  This is what companies match against their job's required skills — without this, you won't get a match score.
-                </p>
                 <button type="submit" className="btn-primary" style={{ marginTop: "10px", width: "80%", maxWidth: "260px", justifySelf: "start" }}>Save Profile</button>
               </form>
 
