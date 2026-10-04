@@ -4,7 +4,7 @@ const DEFAULT_MONGO_URI = "mongodb://varalaxminu:varalaxminu@ac-yokmdwz-shard-00
 
 const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) return;
-  
+
   const urisToTry = [];
   if (process.env.MONGO_URI) {
     const clean = process.env.MONGO_URI.trim().replace(/^["']|["']$/g, '');
@@ -16,15 +16,14 @@ const connectDB = async () => {
 
   for (const uri of urisToTry) {
     try {
-      console.log("Attempting MongoDB connection...");
       await mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 5000,
-        connectTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 2500,
+        connectTimeoutMS: 2500,
       });
       console.log("MongoDB connected successfully");
       return;
     } catch (err) {
-      console.error(`MongoDB connection failed (${err.message})`);
+      console.error(`MongoDB connection failed: ${err.message}`);
     }
   }
 };
