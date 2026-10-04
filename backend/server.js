@@ -107,6 +107,10 @@ app.use('/uploads', (req, res) => {
   res.status(404).json({ message: `Resume file not found: ${req.path}` });
 });
 
+app.get(["/api", "/api/health", "/health"], (req, res) => {
+  res.json({ status: "ok", message: "Campus Hire API is operational" });
+});
+
 app.use("/api/student", studentRoutes);
 app.use("/student", studentRoutes);
 
