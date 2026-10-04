@@ -26,8 +26,12 @@ const {
 } = require("../controllers/companyController");
 
 // Multer storage for company logos
-const logosDir = path.join(__dirname, "..", "uploads", "logos");
-fs.mkdirSync(logosDir, { recursive: true });
+const logosDir = process.env.VERCEL ? path.join("/tmp", "uploads", "logos") : path.join(__dirname, "..", "uploads", "logos");
+try {
+  fs.mkdirSync(logosDir, { recursive: true });
+} catch (e) {
+  // Read-only filesystem on serverless environments
+}
 
 const logoStorage = multer.diskStorage({
   destination: function (req, file, cb) {

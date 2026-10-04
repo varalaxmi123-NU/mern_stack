@@ -10,8 +10,12 @@ const { protect, authorize } = require("../middleware/authMiddleware");
 // Resolve the uploads folder relative to this file (not process.cwd()),
 // so resumes always land in backend/uploads/resumes no matter where the
 // server was started from - this is what server.js serves as static files.
-const resumesDir = path.join(__dirname, "..", "uploads", "resumes");
-fs.mkdirSync(resumesDir, { recursive: true });
+const resumesDir = process.env.VERCEL ? path.join("/tmp", "uploads", "resumes") : path.join(__dirname, "..", "uploads", "resumes");
+try {
+  fs.mkdirSync(resumesDir, { recursive: true });
+} catch (e) {
+  // Read-only filesystem on serverless environments
+}
 
 // Multer Storage Configuration
 const storage = multer.diskStorage({
