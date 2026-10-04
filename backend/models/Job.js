@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+require("./Company");
 
 const jobSchema = new mongoose.Schema(
   {

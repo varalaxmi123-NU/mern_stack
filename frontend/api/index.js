@@ -2,6 +2,15 @@ import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
 
+// Ensure all Mongoose schemas are registered first
+import "./backend/models/Company.js";
+import "./backend/models/Student.js";
+import "./backend/models/Job.js";
+import "./backend/models/Admin.js";
+import "./backend/models/Application.js";
+import "./backend/models/Employee.js";
+import "./backend/models/PlacementUpdate.js";
+
 import connectDB from "./backend/config/db.js";
 import studentRoutes from "./backend/routes/studentRoutes.js";
 import authRoutes from "./backend/routes/authRoutes.js";

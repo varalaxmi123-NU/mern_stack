@@ -2,6 +2,15 @@ const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
 
+// Ensure all Mongoose schemas are registered first
+require("../backend/models/Company");
+require("../backend/models/Student");
+require("../backend/models/Job");
+require("../backend/models/Admin");
+require("../backend/models/Application");
+require("../backend/models/Employee");
+require("../backend/models/PlacementUpdate");
+
 const connectDB = require("../backend/config/db");
 const studentRoutes = require("../backend/routes/studentRoutes");
 const authRoutes = require("../backend/routes/authRoutes");
