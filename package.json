@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "npm install && npm --prefix backend install && npm --prefix frontend install && npm --prefix frontend run build"
+    "build": "npm install && npm --prefix backend install && npm --prefix frontend install && node -e \"const fs=require('fs'); fs.cpSync('backend', 'frontend/backend', {recursive:true});\" && npm --prefix frontend run build"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
