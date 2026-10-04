@@ -4,24 +4,27 @@ const DEFAULT_MONGO_URI = "mongodb://varalaxminu:varalaxminu@ac-yokmdwz-shard-00
 
 const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) return;
-  try {
-    const rawUri = process.env.MONGO_URI || DEFAULT_MONGO_URI;
-    const uri = rawUri.trim().replace(/^["']|["']$/g, '');
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
-      bufferCommands: false,
-    });
-    console.log("MongoDB connected successfully");
-  } catch (err) {
-    console.error("MongoDB connection error:", err.message);
-    // Retry with DEFAULT_MONGO_URI if custom MONGO_URI failed
-    if (process.env.MONGO_URI && process.env.MONGO_URI !== DEFAULT_MONGO_URI) {
-      console.log("Attempting fallback to default MongoDB Atlas cluster...");
-      await mongoose.connect(DEFAULT_MONGO_URI, {
+  
+  const urisToTry = [];
+  if (process.env.MONGO_URI) {
+    const clean = process.env.MONGO_URI.trim().replace(/^["']|["']$/g, '');
+    if (clean) urisToTry.push(clean);
+  }
+  if (!urisToTry.includes(DEFAULT_MONGO_URI)) {
+    urisToTry.push(DEFAULT_MONGO_URI);
+  }
+
+  for (const uri of urisToTry) {
+    try {
+      console.log("Attempting MongoDB connection...");
+      await mongoose.connect(uri, {
         serverSelectionTimeoutMS: 5000,
-        bufferCommands: false,
+        connectTimeoutMS: 5000,
       });
-      console.log("Fallback MongoDB connected successfully");
+      console.log("MongoDB connected successfully");
+      return;
+    } catch (err) {
+      console.error(`MongoDB connection failed (${err.message})`);
     }
   }
 };
