@@ -57,4 +57,10 @@ app.use("/admin", adminRoutes);
 app.use("/api/placements", placementRoutes);
 app.use("/placements", placementRoutes);
 
+// Global Error Handler to catch any route/middleware exception cleanly
+app.use((err, req, res, next) => {
+  console.error("Express Error Handler caught:", err);
+  res.status(500).json({ error: "Server Error", message: err.message || "An unexpected error occurred" });
+});
+
 module.exports = app;
