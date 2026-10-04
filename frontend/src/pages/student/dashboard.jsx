@@ -265,6 +265,49 @@ function StudentDashboard() {
         <div className="content-body">
           {tab === "jobs" && (
             <div className="dash-section">
+              {visibleApplications.filter((a) => a.status === "Interview Scheduled" || a.interviewLink).map((app) => (
+                <div key={`banner-${app._id}`} style={{
+                  background: "linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12))",
+                  border: "1px solid rgba(99, 102, 241, 0.3)",
+                  borderRadius: "14px",
+                  padding: "16px 20px",
+                  marginBottom: "20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                  boxShadow: "0 4px 15px rgba(99, 102, 241, 0.08)"
+                }}>
+                  <div>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", padding: "4px 10px", borderRadius: "20px", fontSize: "0.78rem", fontWeight: "600", marginBottom: "8px" }}>
+                      <span>📅</span> Interview Scheduled
+                    </div>
+                    <h4 style={{ margin: "0 0 4px 0", fontSize: "1.1rem" }}>
+                      {app.job?.title} — <span style={{ color: "var(--color-primary)" }}>{app.company?.name}</span>
+                    </h4>
+                    <p style={{ margin: 0, fontSize: "0.9rem", color: "var(--color-text-muted)" }}>
+                      {app.interviewDate ? `Scheduled Date: ${new Date(app.interviewDate).toLocaleString()}` : "Interview details updated by company."}
+                    </p>
+                  </div>
+                  {app.interviewLink && (
+                    /^https?:\/\//i.test(app.interviewLink) ? (
+                      <a
+                        href={app.interviewLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", color: "#fff", textDecoration: "none", padding: "10px 18px", borderRadius: "8px", fontWeight: "600", fontSize: "0.9rem", display: "inline-flex", alignItems: "center", gap: "6px" }}
+                      >
+                        Join Interview ↗
+                      </a>
+                    ) : (
+                      <span style={{ fontSize: "0.9rem", fontWeight: "500" }}>
+                        📍 {app.interviewLink}
+                      </span>
+                    )
+                  )}
+                </div>
+              ))}
               <div className="dash-section-header">
                 <h3>Open Opportunities <span className="dash-section-count">{jobs.length}</span></h3>
               </div>
@@ -371,53 +414,30 @@ function StudentDashboard() {
                       <span className={`badge ${app.status === 'Hired' ? 'badge-placed' : (app.status === 'Rejected' ? 'badge-closed' : 'badge-open')}`}>
                         Status: {app.status}
                       </span>
-                      {(app.status === "Interview Scheduled" || app.status === "Hired") && app.interviewDate && (
-                        <div style={{ marginTop: "10px", fontSize: "0.85rem", color: "var(--color-primary)" }}>
-                          <strong style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                              <line x1="16" y1="2" x2="16" y2="6"/>
-                              <line x1="8" y1="2" x2="8" y2="6"/>
-                              <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                            {new Date(app.interviewDate).toLocaleString()}
-                          </strong>
-                          <br />
+                      {(app.status === "Interview Scheduled" || app.interviewLink || app.interviewDate) && (
+                        <div style={{ marginTop: "10px", fontSize: "0.88rem", background: "rgba(99, 102, 241, 0.08)", padding: "8px 12px", borderRadius: "8px", border: "1px solid rgba(99, 102, 241, 0.2)", textAlign: "left" }}>
+                          {app.interviewDate && (
+                            <div style={{ color: "var(--color-primary)", fontWeight: "600", marginBottom: "4px" }}>
+                              📅 {new Date(app.interviewDate).toLocaleString()}
+                            </div>
+                          )}
                           {app.interviewLink ? (
                             /^https?:\/\//i.test(app.interviewLink) ? (
-                              <button
-                                type="button"
-                                style={{ background: "none", border: "none", padding: 0, color: "var(--color-primary)", cursor: "pointer", font: "inherit", textDecoration: "underline" }}
-                                onClick={() => {
-                                  const now = new Date();
-                                  const interviewTime = new Date(app.interviewDate);
-                                  // Give a 15 minute head start before the scheduled time,
-                                  // and treat anything more than 2 hours past it as over —
-                                  // so a stale/offline link doesn't just open to a dead page.
-                                  const opensAt = new Date(interviewTime.getTime() - 15 * 60 * 1000);
-                                  const closesAt = new Date(interviewTime.getTime() + 2 * 60 * 60 * 1000);
-                                  if (now < opensAt) {
-                                    setError(`This interview isn't open yet. It will be available at ${interviewTime.toLocaleString()}.`);
-                                  } else if (now > closesAt) {
-                                    setError("This interview session has ended and the link is no longer active.");
-                                  } else {
-                                    window.open(app.interviewLink, "_blank", "noopener,noreferrer");
-                                  }
-                                }}
+                              <a
+                                href={app.interviewLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: "var(--color-primary)", fontWeight: "600", textDecoration: "underline", display: "inline-flex", alignItems: "center", gap: "4px" }}
                               >
-                                Join Interview ↗
-                              </button>
+                                Join Interview Meeting ↗
+                              </a>
                             ) : (
-                              <span style={{ color: "var(--color-text-muted)", display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                                  <circle cx="12" cy="10" r="3"/>
-                                </svg>
-                                In-person / offline: {app.interviewLink}
+                              <span style={{ color: "var(--color-text-muted)" }}>
+                                📍 {app.interviewLink}
                               </span>
                             )
                           ) : (
-                            <span style={{ color: "var(--color-text-muted)" }}>Interview link will appear here closer to the scheduled time.</span>
+                            <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>Interview link will appear here.</span>
                           )}
                         </div>
                       )}
