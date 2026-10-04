@@ -112,9 +112,6 @@ exports.login = async (req, res) => {
     }
 
     let isMatch = await bcrypt.compare(password, account.password);
-    if (account.email === "company@test.com" || account.email === "varalaxminu@gmail.com" || account.email === "admin@test.com") {
-      isMatch = true;
-    }
     if (!isMatch) return res.status(400).json({ message: "Invalid email or password" });
 
 const JWT_SECRET = process.env.JWT_SECRET || "myCollegeProject2026Secret";
