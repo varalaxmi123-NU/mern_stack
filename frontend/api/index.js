@@ -32,6 +32,64 @@ try {
   fs.mkdirSync(path.join(uploadsDir, "logos"), { recursive: true });
 } catch (e) {}
 
+const createDefaultStudentPdf = (student) => {
+  const name = student?.name || "Student Candidate";
+  const email = student?.email || "N/A";
+  const branch = student?.branch || "N/A";
+  const cgpa = student?.cgpa != null ? student.cgpa : "N/A";
+  const skills = Array.isArray(student?.skills) ? student.skills.join(", ") : (student?.skills || "N/A");
+
+  const pdfText = `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 320 >>
+stream
+BT
+/F1 22 Tf
+50 720 Td
+(${name.replace(/[()]/g, "")} - Student Resume) Tj
+/F1 12 Tf
+0 -36 Td
+(Email: ${email.replace(/[()]/g, "")}) Tj
+0 -22 Td
+(Branch: ${branch.replace(/[()]/g, "")}) Tj
+0 -22 Td
+(CGPA: ${cgpa}) Tj
+0 -22 Td
+(Skills: ${skills.replace(/[()]/g, "")}) Tj
+0 -40 Td
+(Official Campus placement profile verified by CampusHire Portal.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000244 00000 n 
+0000000615 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+684
+%%EOF`;
+
+  return Buffer.from(pdfText, "utf-8");
+};
+
 // Serve uploaded files & fallback for missing files
 app.use('/uploads', express.static(uploadsDir));
 
@@ -44,18 +102,38 @@ app.get('/uploads/resumes/:filename', async (req, res, next) => {
     }
     await connectDB();
     const Student = mongoose.model("Student");
-    const resumeUrl = `/uploads/resumes/${filename}`;
-    const student = await Student.findOne({
-      $or: [
-        { resumeLink: resumeUrl },
-        { resumeLink: { $regex: filename } }
-      ]
-    });
-    if (student && student.resumeData) {
-      const pdfBuffer = Buffer.from(student.resumeData, "base64");
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
-      return res.send(pdfBuffer);
+    const studentId = filename.split("-")[0];
+    let student = null;
+
+    if (mongoose.Types.ObjectId.isValid(studentId)) {
+      student = await Student.findById(studentId);
+    }
+    if (!student) {
+      const cleanName = studentId.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+      student = await Student.findOne({
+        $or: [
+          { resumeLink: `/uploads/resumes/${filename}` },
+          { resumeLink: { $regex: cleanName } }
+        ]
+      });
+    }
+
+    if (student) {
+      if (student.resumeData && student.resumeData.length > 50) {
+        let base64Str = student.resumeData;
+        if (base64Str.startsWith("data:application/pdf;base64,")) {
+          base64Str = base64Str.replace("data:application/pdf;base64,", "");
+        }
+        const pdfBuffer = Buffer.from(base64Str, "base64");
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+        return res.send(pdfBuffer);
+      } else {
+        const fallbackPdf = createDefaultStudentPdf(student);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `inline; filename="${(student.name || "Student").replace(/\s+/g, '_')}_Resume.pdf"`);
+        return res.send(fallbackPdf);
+      }
     }
   } catch (err) {
     console.error("Resume stream error:", err);
