@@ -207,16 +207,6 @@ function AdminDashboard() {
       ),
     },
     {
-      key: "markHired",
-      label: "Record Placement",
-      icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-          <polyline points="22 4 12 14.01 9 11.01" />
-        </svg>
-      ),
-    },
-    {
       key: "records",
       label: "Placement Records",
       icon: (
@@ -242,7 +232,6 @@ function AdminDashboard() {
     companies:  "All Companies",
     addCompany: "Add New Company",
     students:   "All Students",
-    markHired:  "Record Placement",
     records:    "Placement Records",
     officers:   "Placement Officers",
   };
@@ -277,10 +266,6 @@ function AdminDashboard() {
               <span className="user-name">{user?.name || "Admin"}</span>
               <span className="user-role">{isSuperAdmin ? "Super Admin" : "Placement Officer"}</span>
             </div>
-          </div>
-          <div className="sidebar-system-badge">
-            <span>Portal Status</span>
-            <span className="sidebar-system-status"><span className="sidebar-system-dot"></span> Live</span>
           </div>
           <button className="btn-logout-sidebar" onClick={handleLogout}>
             Sign Out
@@ -725,21 +710,35 @@ function AdminDashboard() {
                             )}
 
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-                              <span className={`badge ${s.placementStatus === "Placed" ? "badge-placed-subtle" : "badge-notplaced"}`}>
-                                {s.placementStatus === "Placed" ? `✓ Placed @ ${s.placedCompany}` : "Active Candidate"}
-                              </span>
+                              {s.placementStatus === "Placed" && (
+                                <span className="badge badge-placed-subtle">
+                                  ✓ Placed @ {s.placedCompany}
+                                </span>
+                              )}
                               {s.resumeLink ? (
                                 <a
                                   href={resolveFileUrl(s.resumeLink)}
                                   target="_blank"
-                                  rel="noreferrer"
-                                  style={{ fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", color: "#4338ca", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "6px", padding: "3px 9px" }}
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    fontSize: "0.8rem",
+                                    fontWeight: 700,
+                                    textDecoration: "none",
+                                    color: "#ffffff",
+                                    background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                                    borderRadius: "7px",
+                                    padding: "5px 12px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    boxShadow: "0 2px 8px rgba(79, 70, 229, 0.22)"
+                                  }}
                                 >
-                                  View Resume
+                                  📄 View Resume ↗
                                 </a>
                               ) : (
-                                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "3px 9px" }}>
-                                  Resume not uploaded
+                                <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "#94a3b8", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 9px" }}>
+                                  No resume uploaded
                                 </span>
                               )}
                             </div>
@@ -755,45 +754,6 @@ function AdminDashboard() {
               </div>
             );
           })()}
-
-          {tab === "markHired" && (
-            <div className="dash-section">
-              <div className="dash-section-header">
-                <h3>Mark a Student as Hired</h3>
-              </div>
-              <p style={{ color: "var(--color-text-muted)", marginBottom: 24, fontSize: "0.9rem" }}>
-                Record an offer a student has accepted. It will appear in the Placement Feed for every student.
-              </p>
-              <form className="dash-form" onSubmit={handleMarkHired}>
-                <label>Student
-                  <select value={hireForm.studentId} onChange={(e) => setHireForm({ ...hireForm, studentId: e.target.value })}>
-                    <option value="">Select student</option>
-                    {students.filter((s) => s.placementStatus !== "Placed").map((s) => (
-                      <option key={s._id} value={s._id}>{s.name} ({s.email})</option>
-                    ))}
-                  </select>
-                </label>
-                <label>Company
-                  <select value={hireForm.companyId} onChange={(e) => setHireForm({ ...hireForm, companyId: e.target.value })}>
-                    <option value="">Select company</option>
-                    {companies.map((c) => (
-                      <option key={c._id} value={c._id}>{c.name}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>Job Title
-                  <input value={hireForm.jobTitle} onChange={(e) => setHireForm({ ...hireForm, jobTitle: e.target.value })} placeholder="e.g. Software Engineer" />
-                </label>
-                <label>Package
-                  <input value={hireForm.package} onChange={(e) => setHireForm({ ...hireForm, package: e.target.value })} placeholder="e.g. 6 LPA" />
-                </label>
-                <label>Eligibility Criteria Used
-                  <input value={hireForm.eligibility} onChange={(e) => setHireForm({ ...hireForm, eligibility: e.target.value })} placeholder="e.g. CSE/ISE, CGPA 7+" />
-                </label>
-                <button className="btn-primary" type="submit" style={{ marginTop: "10px", width: "fit-content", minWidth: "200px", padding: "12px 28px", justifySelf: "start" }}>Confirm Placement</button>
-              </form>
-            </div>
-          )}
 
           {tab === "records" && (
             <div className="dash-section">

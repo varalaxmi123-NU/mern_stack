@@ -234,10 +234,6 @@ function StudentDashboard() {
               <span className="user-role">Student</span>
             </div>
           </div>
-          <div className="sidebar-system-badge">
-            <span>Portal Status</span>
-            <span className="sidebar-system-status"><span className="sidebar-system-dot"></span> Live</span>
-          </div>
           <button className="btn-logout-sidebar" onClick={handleLogout}>
             Sign Out
           </button>

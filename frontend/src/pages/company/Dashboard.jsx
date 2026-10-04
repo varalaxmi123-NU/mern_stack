@@ -440,10 +440,6 @@ function CompanyDashboard() {
               <span className="user-role">{user?.isEmployee ? (user?.designation || "Employee") : "Company"}</span>
             </div>
           </div>
-          <div className="sidebar-system-badge">
-            <span>Portal Status</span>
-            <span className="sidebar-system-status"><span className="sidebar-system-dot"></span> Live</span>
-          </div>
           <button className="btn-logout-sidebar" onClick={handleLogout}>
             Sign Out
           </button>
@@ -543,7 +539,7 @@ function CompanyDashboard() {
                                         rel="noreferrer"
                                         style={{ fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", color: "#4338ca", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "6px", padding: "5px 10px", display: "inline-flex", alignItems: "center", gap: "4px" }}
                                       >
-                                        View Resume
+                                        📄 View Resume ↗
                                       </a>
                                     ) : (
                                       <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "5px 10px" }}>
@@ -816,21 +812,35 @@ function CompanyDashboard() {
                             )}
 
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6, flexWrap: "wrap" }}>
-                              <span className={`badge ${s.placementStatus === "Placed" ? "badge-placed-subtle" : "badge-notplaced"}`}>
-                                {s.placementStatus === "Placed" ? `✓ Placed @ ${s.placedCompany}` : "Active Candidate"}
-                              </span>
+                              {s.placementStatus === "Placed" && (
+                                <span className="badge badge-placed-subtle">
+                                  ✓ Placed @ {s.placedCompany}
+                                </span>
+                              )}
                               {s.resumeLink ? (
                                 <a
                                   href={resolveFileUrl(s.resumeLink)}
                                   target="_blank"
-                                  rel="noreferrer"
-                                  style={{ fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", color: "#4338ca", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "6px", padding: "3px 9px" }}
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    fontSize: "0.8rem",
+                                    fontWeight: 700,
+                                    textDecoration: "none",
+                                    color: "#ffffff",
+                                    background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                                    borderRadius: "7px",
+                                    padding: "5px 12px",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    boxShadow: "0 2px 8px rgba(79, 70, 229, 0.22)"
+                                  }}
                                 >
-                                  View Resume
+                                  📄 View Resume ↗
                                 </a>
                               ) : (
-                                <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "3px 9px" }}>
-                                  Resume not uploaded
+                                <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "#94a3b8", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 9px" }}>
+                                  No resume uploaded
                                 </span>
                               )}
                             </div>
