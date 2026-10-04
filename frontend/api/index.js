@@ -90,67 +90,76 @@ startxref
   return Buffer.from(pdfText, "utf-8");
 };
 
-// Serve uploaded files & fallback for missing files
-app.use('/uploads', express.static(uploadsDir));
+// Universal Top-Level Upload/Resume Request Interceptor
+app.use(async (req, res, next) => {
+  const reqPath = req.path || "";
+  const reqUrl = req.url || "";
+  const origUrl = req.originalUrl || "";
+  const matchedPath = (req.headers && req.headers["x-matched-path"]) ? req.headers["x-matched-path"] : "";
 
-app.use(['/uploads/resumes/:filename', '/uploads/*', '/api/uploads/*'], async (req, res) => {
-  try {
-    const rawPath = req.path || req.url || "";
-    const filename = path.basename(rawPath.split('?')[0]);
-    const resumePath = path.join(uploadsDir, "resumes", filename);
+  const checkStr = `${reqPath} ${reqUrl} ${origUrl} ${matchedPath}`.toLowerCase();
 
-    if (fs.existsSync(resumePath)) {
-      return res.sendFile(resumePath);
-    }
-
+  if (checkStr.includes("upload") || checkStr.includes("resume") || checkStr.includes(".pdf")) {
     try {
-      await connectDB();
-    } catch (e) {}
+      const targetUrl = origUrl || reqUrl || reqPath;
+      const filename = path.basename(targetUrl.split('?')[0]) || "resume.pdf";
+      const resumePath = path.join(uploadsDir, "resumes", filename);
 
-    const Student = mongoose.model("Student");
-    const studentId = filename.split("-")[0];
-    let student = null;
-
-    if (mongoose.Types.ObjectId.isValid(studentId)) {
-      student = await Student.findById(studentId);
-    }
-    if (!student) {
-      const cleanName = studentId.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
-      student = await Student.findOne({
-        $or: [
-          { resumeLink: `/uploads/resumes/${filename}` },
-          { resumeLink: { $regex: cleanName } }
-        ]
-      });
-    }
-
-    if (!student) {
-      student = await Student.findOne({ resumeLink: { $ne: "" } });
-    }
-
-    if (student && student.resumeData && student.resumeData.length > 50) {
-      let base64Str = student.resumeData;
-      if (base64Str.startsWith("data:application/pdf;base64,")) {
-        base64Str = base64Str.replace("data:application/pdf;base64,", "");
+      if (fs.existsSync(resumePath)) {
+        return res.sendFile(resumePath);
       }
-      const pdfBuffer = Buffer.from(base64Str, "base64");
-      res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
-      return res.send(pdfBuffer);
-    }
 
-    // Dynamic PDF generator fallback
-    const pdfBuffer = createDefaultStudentPdf(student);
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
-    return res.send(pdfBuffer);
-  } catch (err) {
-    console.error("Upload handler error:", err);
-    const fallbackPdf = createDefaultStudentPdf(null);
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `inline; filename="Resume.pdf"`);
-    return res.send(fallbackPdf);
+      try {
+        await connectDB();
+      } catch (e) {}
+
+      const Student = mongoose.model("Student");
+      const studentId = filename.split("-")[0];
+      let student = null;
+
+      if (studentId && mongoose.Types.ObjectId.isValid(studentId)) {
+        student = await Student.findById(studentId);
+      }
+      if (!student && filename) {
+        const cleanName = filename.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&");
+        student = await Student.findOne({
+          $or: [
+            { resumeLink: `/uploads/resumes/${filename}` },
+            { resumeLink: { $regex: cleanName } }
+          ]
+        });
+      }
+
+      if (!student) {
+        student = await Student.findOne({ resumeLink: { $ne: "" } });
+      }
+
+      if (student && student.resumeData && student.resumeData.length > 50) {
+        let base64Str = student.resumeData;
+        if (base64Str.startsWith("data:application/pdf;base64,")) {
+          base64Str = base64Str.replace("data:application/pdf;base64,", "");
+        }
+        const pdfBuffer = Buffer.from(base64Str, "base64");
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+        return res.send(pdfBuffer);
+      }
+
+      // Dynamic PDF fallback
+      const pdfBuffer = createDefaultStudentPdf(student);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="${filename.endsWith('.pdf') ? filename : 'Resume.pdf'}"`);
+      return res.send(pdfBuffer);
+    } catch (err) {
+      console.error("Upload interceptor error:", err);
+      const fallbackPdf = createDefaultStudentPdf(null);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="Resume.pdf"`);
+      return res.send(fallbackPdf);
+    }
   }
+
+  next();
 });
 
 // Serverless DB connection middleware
