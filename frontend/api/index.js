@@ -1,3 +1,6 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -48,4 +51,4 @@ app.use("/admin", adminRoutes);
 app.use("/api/placements", placementRoutes);
 app.use("/placements", placementRoutes);
 
-module.exports = app;
+export default app;
