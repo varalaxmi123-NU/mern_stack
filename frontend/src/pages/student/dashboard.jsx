@@ -573,11 +573,7 @@ function StudentDashboard() {
                     rel="noreferrer"
                     className="resume-view-link"
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                    View Current Resume ({user.resumeLink.startsWith("/uploads") ? "Uploaded PDF" : "External Link"})
+                    View Resume
                   </a>
                 ) : (
                   <p style={{ margin: 0, fontSize: "0.86rem", color: "var(--color-text-muted)" }}>

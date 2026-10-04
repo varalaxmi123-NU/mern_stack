@@ -539,7 +539,7 @@ function CompanyDashboard() {
                                         rel="noreferrer"
                                         style={{ fontSize: "0.78rem", fontWeight: 700, textDecoration: "none", color: "#4338ca", background: "#eef2ff", border: "1px solid #c7d2fe", borderRadius: "6px", padding: "5px 10px", display: "inline-flex", alignItems: "center", gap: "4px" }}
                                       >
-                                        📄 View Resume ↗
+                                        View Resume
                                       </a>
                                     ) : (
                                       <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#92400e", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "6px", padding: "5px 10px" }}>
@@ -836,7 +836,7 @@ function CompanyDashboard() {
                                     boxShadow: "0 2px 8px rgba(79, 70, 229, 0.22)"
                                   }}
                                 >
-                                  📄 View Resume ↗
+                                  View Resume
                                 </a>
                               ) : (
                                 <span style={{ fontSize: "0.78rem", fontWeight: 500, color: "#94a3b8", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", padding: "4px 9px" }}>

@@ -34,6 +34,35 @@ try {
 
 // Serve uploaded files & fallback for missing files
 app.use('/uploads', express.static(uploadsDir));
+
+app.get('/uploads/resumes/:filename', async (req, res, next) => {
+  try {
+    const filename = req.params.filename;
+    const resumePath = path.join(uploadsDir, "resumes", filename);
+    if (fs.existsSync(resumePath)) {
+      return res.sendFile(resumePath);
+    }
+    await connectDB();
+    const Student = mongoose.model("Student");
+    const resumeUrl = `/uploads/resumes/${filename}`;
+    const student = await Student.findOne({
+      $or: [
+        { resumeLink: resumeUrl },
+        { resumeLink: { $regex: filename } }
+      ]
+    });
+    if (student && student.resumeData) {
+      const pdfBuffer = Buffer.from(student.resumeData, "base64");
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `inline; filename="${filename}"`);
+      return res.send(pdfBuffer);
+    }
+  } catch (err) {
+    console.error("Resume stream error:", err);
+  }
+  next();
+});
+
 app.use('/uploads', (req, res) => {
   res.status(404).send(`
     <!DOCTYPE html>

@@ -14,6 +14,7 @@ const studentSchema = new mongoose.Schema(
     // resume screening against a job's required skills.
     skills: { type: [String], default: [] },
     resumeLink: { type: String, default: "" },
+    resumeData: { type: String, default: "" },
     resetOtp: { type: String },
     resetOtpExpires: { type: Date },
 

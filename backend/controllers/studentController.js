@@ -58,26 +58,30 @@ exports.uploadResume = async (req, res) => {
       return res.status(400).json({ message: "No file uploaded" });
     }
     const path = require("path");
+    const fs = require("fs");
+
     if (path.extname(req.file.originalname).toLowerCase() !== ".pdf") {
-      const fs = require("fs");
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       return res.status(400).json({ message: "Only PDF files (.pdf) are allowed" });
     }
+
     const resumeUrl = `/uploads/resumes/${req.file.filename}`;
+    let resumeData = "";
 
-    // Sanity check: confirm the file actually landed on disk where we expect
-    // before saving the link - catches silent multer/disk issues immediately
-    // instead of only finding out later when someone tries to open it.
-    const fs = require("fs");
-    if (!fs.existsSync(req.file.path)) {
-      console.error(`❌ Resume upload reported success but file is missing at: ${req.file.path}`);
-      return res.status(500).json({ message: "Upload failed - file was not saved. Please try again." });
+    if (fs.existsSync(req.file.path)) {
+      const fileBuffer = fs.readFileSync(req.file.path);
+      resumeData = fileBuffer.toString("base64");
     }
-    console.log(`✅ Resume saved to: ${req.file.path}`);
 
-    const student = await Student.findByIdAndUpdate(req.user.id, { resumeLink: resumeUrl }, { new: true }).select("-password");
+    const student = await Student.findByIdAndUpdate(
+      req.user.id,
+      { resumeLink: resumeUrl, resumeData },
+      { new: true }
+    ).select("-password");
+
     res.json({ message: "Resume uploaded successfully", student });
   } catch (error) {
+    console.error("Upload resume error:", error);
     res.status(500).json({ message: "Server error during upload" });
   }
 };
